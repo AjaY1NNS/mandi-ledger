@@ -10,9 +10,10 @@ const initialState = {
   sellers:       [],
   commodities:   [],
   masterLoading: false,
-  // UI – default to today so the list opens showing only the last 24 h of entries
+  // UI – default to Last 24h (today only, date-level granularity)
   searchQuery:   '',
-  filterDate:    new Date().toISOString().slice(0, 10),
+  filterFrom:    new Date().toISOString().slice(0, 10),
+  filterTo:      new Date().toISOString().slice(0, 10),
   currentPage:   1,
   pageSize:      15,
   sortColumn:    'date',
@@ -80,8 +81,8 @@ function appReducer(state, action) {
       return { ...state, commodities: state.commodities.filter(c => c.id !== action.payload) }
     case 'SET_SEARCH':
       return { ...state, searchQuery: action.payload, currentPage: 1 }
-    case 'SET_FILTER_DATE':
-      return { ...state, filterDate: action.payload, currentPage: 1 }
+    case 'SET_FILTER_RANGE':
+      return { ...state, filterFrom: action.payload.from, filterTo: action.payload.to, currentPage: 1 }
     case 'SET_PAGE':
       return { ...state, currentPage: action.payload }
     case 'SET_PAGE_SIZE':
@@ -121,7 +122,7 @@ export function AppProvider({ children }) {
   const setLoading     = useCallback((v)        => dispatch({ type: 'SET_LOADING',       payload: v }),                            [])
   const setError       = useCallback((v)        => dispatch({ type: 'SET_ERROR',         payload: v }),                            [])
   const setSearch      = useCallback((v)        => dispatch({ type: 'SET_SEARCH',        payload: v }),                            [])
-  const setFilterDate  = useCallback((v)        => dispatch({ type: 'SET_FILTER_DATE',   payload: v }),                            [])
+  const setFilterRange = useCallback((from, to)  => dispatch({ type: 'SET_FILTER_RANGE',  payload: { from, to } }),                 [])
   const setPage        = useCallback((v)        => dispatch({ type: 'SET_PAGE',          payload: v }),                            [])
   const setPageSize    = useCallback((v)        => dispatch({ type: 'SET_PAGE_SIZE',     payload: v }),                            [])
   const setSort        = useCallback((col, dir) => dispatch({ type: 'SET_SORT',          payload: { column: col, direction: dir } }),[])
@@ -150,7 +151,7 @@ export function AppProvider({ children }) {
     // Entries
     setEntries, addEntry, updateEntry, deleteEntry, approveEntry,
     setLoading, setError,
-    setSearch, setFilterDate, setPage, setPageSize, setSort,
+    setSearch, setFilterRange, setPage, setPageSize, setSort,
     openAddModal, closeAddModal, openEditModal, closeEditModal,
     // Master data
     setMasterLoading,

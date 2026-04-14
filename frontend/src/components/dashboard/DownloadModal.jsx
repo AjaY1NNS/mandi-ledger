@@ -13,8 +13,25 @@ const PRESETS = [
   { label: 'Last Year',   days: 365 },
 ]
 
+// ✅ Get local date string (YYYY-MM-DD) from any Date object
 function toDateStr(d) {
-  return d.toISOString().slice(0, 10)
+  const yyyy = d.getFullYear()
+  const mm   = String(d.getMonth() + 1).padStart(2, '0')
+  const dd   = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+// ✅ Convert any date value (ISO string, serial, plain date) to local YYYY-MM-DD
+function toYMD(raw) {
+  if (!raw && raw !== 0) return ''
+  const s = String(raw).trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s          // already YYYY-MM-DD
+  if (/^\d+(\.\d+)?$/.test(s)) {                        // numeric serial
+    const d = new Date(Date.UTC(1899, 11, 30) + parseFloat(s) * 86400000)
+    return toDateStr(d)
+  }
+  const d = new Date(s)                                  // ISO or any parseable
+  return isNaN(d) ? s : toDateStr(d)
 }
 
 function presetRange(days) {
@@ -95,21 +112,23 @@ export default function DownloadModal({ isOpen, onClose }) {
 
   const handlePreset = (preset) => {
     const { from: f, to: t } = presetRange(preset.days)
+    console.log(`Applying preset "${preset.label}"`, f, t)
     setFrom(f)
     setTo(t)
   }
 
   const filtered = useMemo(() => {
-    return entries.filter(e => {
-      if (from      && e.date < from)                          return false
-      if (to        && e.date > to)                            return false
-      if (commodity && e.commodity !== commodity)              return false
-      if (buyer     && e.buyer     !== buyer)                  return false
-      if (seller    && e.seller    !== seller)                 return false
-      if (approved  && String(e.isApproved) !== approved)     return false
-      return true
-    })
-  }, [entries, from, to, commodity, buyer, seller, approved])
+  return entries.filter(e => {
+    const dateYMD = toYMD(e.date)                              // 👈 key fix
+    if (from      && dateYMD < from)                    return false
+    if (to        && dateYMD > to)                      return false
+    if (commodity && e.commodity !== commodity)         return false
+    if (buyer     && e.buyer     !== buyer)             return false
+    if (seller    && e.seller    !== seller)            return false
+    if (approved  && String(e.isApproved) !== approved) return false
+    return true
+  })
+}, [entries, from, to, commodity, buyer, seller, approved])
 
   const hasFilters = from || to || commodity || buyer || seller || approved
 

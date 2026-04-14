@@ -54,9 +54,25 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
         ? String(initialData.vehicleNumber).split('|').filter(Boolean)
         : ['']
 
+      // Normalise date to YYYY-MM-DD required by <input type="date">
+      const rawDate = initialData.date ?? ''
+      let normalizedDate = ''
+      if (rawDate) {
+        const d = new Date(rawDate.includes('T') ? rawDate : rawDate + 'T00:00:00')
+        if (!isNaN(d.getTime())) {
+          const yyyy = d.getFullYear()
+          const mm   = String(d.getMonth() + 1).padStart(2, '0')
+          const dd   = String(d.getDate()).padStart(2, '0')
+          normalizedDate = `${yyyy}-${mm}-${dd}`
+        } else {
+          normalizedDate = rawDate
+        }
+      }
+
       setForm({
         ...EMPTY_FORM,
         ...initialData,
+        date:            normalizedDate,
         vehicleCount:    initialData.vehicleCount ?? '',
         vehicleNumbers:  vehicles,
         brokerageType:   initialData.brokerageType  || 'percent',
