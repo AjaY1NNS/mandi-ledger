@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { KNOWN_BUYERS, KNOWN_SELLERS, COMMODITIES } from '../../utils/constants'
+import { useApp } from '../../context/AppContext'
 import { validateEntryForm, isFormValid } from '../../utils/validators'
 import { computeAmount, formatCurrency } from '../../utils/helpers'
 import { InlineSpinner } from '../common/LoadingSpinner'
@@ -19,6 +19,12 @@ const EMPTY_FORM = {
   comment:       '',
 }
 
+/** Build display label for a buyer/seller party */
+const partyLabel = (p) =>
+  p.firmName
+    ? `${p.firstName} ${p.lastName} — ${p.firmName}`
+    : `${p.firstName} ${p.lastName}`
+
 /**
  * EntryForm – handles both Add and Edit modes.
  *
@@ -29,6 +35,7 @@ const EMPTY_FORM = {
  *   isEdit       {boolean}
  */
 export default function EntryForm({ initialData = null, onSubmit, onCancel, isEdit = false }) {
+  const { buyers, sellers, commodities } = useApp()
   const [form,       setForm]       = useState(EMPTY_FORM)
   const [errors,     setErrors]     = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -37,21 +44,23 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
   // Populate form when editing
   useEffect(() => {
     if (initialData) {
+      // Check whether the stored buyer/seller name matches any current party
+      const buyerNames  = buyers.map(partyLabel)
+      const sellerNames = sellers.map(partyLabel)
       setForm({
         ...EMPTY_FORM,
         ...initialData,
-        // If buyer/seller is a custom value not in list, populate 'Other'
-        buyer:      KNOWN_BUYERS.includes(initialData.buyer) ? initialData.buyer : 'Other',
-        buyerOther: KNOWN_BUYERS.includes(initialData.buyer) ? '' : (initialData.buyer ?? ''),
-        seller:     KNOWN_SELLERS.includes(initialData.seller) ? initialData.seller : 'Other',
-        sellerOther: KNOWN_SELLERS.includes(initialData.seller) ? '' : (initialData.seller ?? ''),
+        buyer:       buyerNames.includes(initialData.buyer)   ? initialData.buyer  : 'Other',
+        buyerOther:  buyerNames.includes(initialData.buyer)   ? ''                 : (initialData.buyer  ?? ''),
+        seller:      sellerNames.includes(initialData.seller) ? initialData.seller : 'Other',
+        sellerOther: sellerNames.includes(initialData.seller) ? ''                 : (initialData.seller ?? ''),
       })
     } else {
       setForm({ ...EMPTY_FORM, date: new Date().toISOString().slice(0, 10) })
     }
     setErrors({})
     setTouched({})
-  }, [initialData])
+  }, [initialData, buyers, sellers])
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target
@@ -171,7 +180,11 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
           className={inputClass(fieldError('buyer'))}
         >
           <option value="">Select buyer…</option>
-          {KNOWN_BUYERS.map((b) => <option key={b} value={b}>{b}</option>)}
+          {buyers.map((b) => {
+            const label = partyLabel(b)
+            return <option key={b.id} value={label}>{label}</option>
+          })}
+          <option value="Other">Other…</option>
         </select>
         {form.buyer === 'Other' && (
           <input
@@ -196,7 +209,11 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
           className={inputClass(fieldError('seller'))}
         >
           <option value="">Select seller…</option>
-          {KNOWN_SELLERS.map((s) => <option key={s} value={s}>{s}</option>)}
+          {sellers.map((s) => {
+            const label = partyLabel(s)
+            return <option key={s.id} value={label}>{label}</option>
+          })}
+          <option value="Other">Other…</option>
         </select>
         {form.seller === 'Other' && (
           <input
@@ -211,7 +228,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
         )}
       </Field>
 
-      {/* ── Row 3: Commodity ────────────────────────────────────── */}
+      {/* ── Commodity ───────────────────────────────────────────── */}
       <Field label="Commodity" required error={fieldError('commodity')}>
         <select
           name="commodity"
@@ -221,7 +238,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
           className={inputClass(fieldError('commodity'))}
         >
           <option value="">Select commodity…</option>
-          {COMMODITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          {commodities.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
         </select>
       </Field>
 

@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext'
 import { useEntries } from '../hooks/useEntries'
 import { useFilteredEntries } from '../hooks/useFilteredEntries'
 import { useConfirm } from '../hooks/useConfirm'
+import { useManage } from '../hooks/useManage'
 
 export default function DashboardPage() {
   const { isLoading, error, showAddModal, showEditModal, editingEntry, openAddModal, closeAddModal, openEditModal, closeEditModal } = useApp()
@@ -21,16 +22,18 @@ export default function DashboardPage() {
   const { loadEntries, addEntry, updateEntry, deleteEntry } = useEntries()
   const { data: entries, totalCount, totalPages } = useFilteredEntries()
   const { confirmState, requestConfirm, handleConfirm, handleCancel } = useConfirm()
+  const { loadMasterData } = useManage()
 
   // View mode: 'table' on desktop, 'cards' on mobile
   const [viewMode, setViewMode] = useState(() =>
     window.innerWidth < 768 ? 'cards' : 'table'
   )
 
-  // Load entries on mount
+  // Load entries + master data on mount (parallel)
   useEffect(() => {
     loadEntries()
-  }, [loadEntries])
+    loadMasterData()
+  }, [loadEntries, loadMasterData])
 
   // Responsive: auto-switch view at 768 px
   useEffect(() => {

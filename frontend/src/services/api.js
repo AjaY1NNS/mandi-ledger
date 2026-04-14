@@ -41,26 +41,36 @@ function unwrap(payload) {
   return payload
 }
 
-// ── API methods ───────────────────────────────────────────────────────────────
+// ── Entries ───────────────────────────────────────────────────────────────────
 
-/** Fetch all ledger entries */
-export const fetchEntries = () =>
-  gasGet({ action: 'list' })
+export const fetchEntries  = ()          => gasGet({ action: 'list' })
+export const addEntry      = (data)      => gasGet({ action: 'add',    data: JSON.stringify(data) })
+export const updateEntry   = (data)      => gasGet({ action: 'update', data: JSON.stringify(data) })
+export const deleteEntry   = (id)        => gasGet({ action: 'delete', data: JSON.stringify({ id }) })
 
-/** Fetch user role from the Users sheet */
-export const fetchUserRole = (email) =>
-  gasGet({ action: 'getUser', email })
+// ── Users ─────────────────────────────────────────────────────────────────────
 
-/** Add a new ledger entry — payload goes as JSON string in `data` param */
-export const addEntry = (entryData) =>
-  gasGet({ action: 'add', data: JSON.stringify(entryData) })
+export const fetchUserRole = (email)     => gasGet({ action: 'getUser', email })
 
-/** Update an existing entry */
-export const updateEntry = (entryData) =>
-  gasGet({ action: 'update', data: JSON.stringify(entryData) })
+// ── Buyers ────────────────────────────────────────────────────────────────────
 
-/** Delete an entry (admin only) */
-export const deleteEntry = (id) =>
-  gasGet({ action: 'delete', data: JSON.stringify({ id }) })
+export const fetchBuyers   = ()          => gasGet({ action: 'listBuyers' })
+export const addBuyer      = (data)      => gasGet({ action: 'addBuyer',    data: JSON.stringify(data) })
+export const updateBuyer   = (data)      => gasGet({ action: 'updateBuyer', data: JSON.stringify(data) })
+export const deleteBuyer   = (id)        => gasGet({ action: 'deleteBuyer', data: JSON.stringify({ id }) })
+
+// ── Sellers ───────────────────────────────────────────────────────────────────
+
+export const fetchSellers  = ()          => gasGet({ action: 'listSellers' })
+export const addSeller     = (data)      => gasGet({ action: 'addSeller',    data: JSON.stringify(data) })
+export const updateSeller  = (data)      => gasGet({ action: 'updateSeller', data: JSON.stringify(data) })
+export const deleteSeller  = (id)        => gasGet({ action: 'deleteSeller', data: JSON.stringify({ id }) })
+
+// ── Commodities ───────────────────────────────────────────────────────────────
+
+export const fetchCommodities  = ()      => gasGet({ action: 'listCommodities' })
+export const addCommodity      = (data)  => gasGet({ action: 'addCommodity',    data: JSON.stringify(data) })
+export const updateCommodity   = (data)  => gasGet({ action: 'updateCommodity', data: JSON.stringify(data) })
+export const deleteCommodity   = (id)    => gasGet({ action: 'deleteCommodity', data: JSON.stringify({ id }) })
 
 export default axiosInstance

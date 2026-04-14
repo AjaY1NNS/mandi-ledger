@@ -3,11 +3,10 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider } from './context/AppContext'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
+import ManagePage from './pages/ManagePage'
 import LoadingSpinner from './components/common/LoadingSpinner'
 
-/**
- * ProtectedRoute – redirects unauthenticated users to /login.
- */
+/** Redirects unauthenticated users to /login */
 function ProtectedRoute({ children }) {
   const { isLoggedIn, authLoading } = useAuth()
   if (authLoading) return <LoadingSpinner message="Initializing…" />
@@ -16,25 +15,25 @@ function ProtectedRoute({ children }) {
 }
 
 /**
- * Inner component that sits inside AuthProvider (so it can use useAuth).
+ * AppRoutes — lives inside AuthProvider + AppProvider so all routes
+ * share the same context instance (buyers/sellers/commodities are loaded once).
  */
 function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <AppProvider>
-              <DashboardPage />
-            </AppProvider>
-          </ProtectedRoute>
-        }
-      />
-      {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <AppProvider>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/"
+          element={<ProtectedRoute><DashboardPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/manage"
+          element={<ProtectedRoute><ManagePage /></ProtectedRoute>}
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AppProvider>
   )
 }
 
