@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans text-gray-900 antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Better focus ring for accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-400 ring-offset-2;
+  }
+}
+
+@layer components {
+  /* Input base style – shared between form fields */
+  .input-base {
+    @apply w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800
+           shadow-sm placeholder-gray-400 transition
+           focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100;
+  }
+
+  .input-error {
+    @apply border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100;
+  }
+
+  /* Card wrapper */
+  .card {
+    @apply rounded-xl border border-gray-100 bg-white shadow-sm;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+}
+
+@layer utilities {
+  /* Clamp text to N lines */
+  .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+  .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+
+  /* Smooth scroll within containers */
+  .scroll-smooth { scroll-behavior: smooth; }
+
+  /* Hide scrollbar but keep scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
+
+/* ── Custom scrollbar for table containers ──────────────────────────────── */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
