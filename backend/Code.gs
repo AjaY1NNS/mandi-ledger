@@ -3,7 +3,9 @@
  * ==========================================
  * Spreadsheet tabs required:
  *   1. "Entries"     – id | date | vehicleCount | vehicleNumber | billNumber |
- *                      buyer | seller | commodity | rate | weight | comment |
+ *                      buyer | seller | commodity | rate | weight |
+ *                      brokerageType | brokerageValue | comment |
+ *                      isDeleted | isApproved | approvedBy | approvedAt |
  *                      createdBy | createdAt | updatedAt | updatedBy
  *   2. "Users"       – email | role
  *   3. "Buyers"      – id | firstName | lastName | firmName | address |
@@ -28,7 +30,9 @@ const COMMODITIES_SHEET = 'Commodities'
 
 const ENTRY_COLS = [
   'id', 'date', 'vehicleCount', 'vehicleNumber', 'billNumber',
-  'buyer', 'seller', 'commodity', 'rate', 'weight', 'comment',
+  'buyer', 'seller', 'commodity', 'rate', 'weight',
+  'brokerageType', 'brokerageValue', 'comment',
+  'isDeleted', 'isApproved', 'approvedBy', 'approvedAt',
   'createdBy', 'createdAt', 'updatedAt', 'updatedBy',
 ]
 
@@ -66,6 +70,7 @@ function handleRequest(e) {
       case 'add':             return handleAdd(e, callerEmail)
       case 'update':          return handleUpdate(e, callerEmail)
       case 'delete':          return handleDelete(e, callerEmail)
+      case 'approve':         return handleApprove(e, callerEmail)
 
       // ── Users ─────────────────────────────────────────────────────────────
       case 'getUser':         return handleGetUser(e.parameter?.email || callerEmail)
@@ -100,14 +105,20 @@ function handleRequest(e) {
 
 function handleList() {
   const sheet = getSheet(ENTRIES_SHEET)
-  return jsonOk(sheetToObjects(sheet))
+  const all   = sheetToObjects(sheet)
+  return jsonOk(all.filter(r => r.isDeleted !== 'true'))
 }
 
 function handleAdd(e, callerEmail) {
   const body = parseBody(e)
-  validateRequired(body, ['id','date','vehicleNumber','billNumber','buyer','seller','commodity','rate','weight'])
+  validateRequired(body, ['id','date','vehicleNumber','billNumber','buyer','seller','commodity','rate'])
   const sheet = getSheet(ENTRIES_SHEET)
-  sheet.appendRow(ENTRY_COLS.map(col => body[col] ?? ''))
+  sheet.appendRow(ENTRY_COLS.map(col => {
+    if (col === 'isDeleted')  return 'false'
+    if (col === 'isApproved') return 'false'
+    if (col === 'approvedBy' || col === 'approvedAt') return ''
+    return body[col] ?? ''
+  }))
   return jsonOk(body, 'Entry added successfully.')
 }
 
@@ -115,9 +126,14 @@ function handleUpdate(e, callerEmail) {
   const body = parseBody(e)
   if (!body.id) return jsonError('Missing entry id', 400)
 
+  const existing = findObjectById(ENTRIES_SHEET, body.id)
+  if (!existing) return jsonError('Entry not found', 404)
+
+  // Approved entries are locked – nobody can edit them
+  if (String(existing.isApproved) === 'true')
+    return jsonError('This entry has been approved and cannot be edited.', 403)
+
   if (getUserRole(callerEmail) !== 'admin') {
-    const existing = findObjectById(ENTRIES_SHEET, body.id)
-    if (!existing) return jsonError('Entry not found', 404)
     if (String(existing.createdBy).toLowerCase() !== callerEmail.toLowerCase())
       return jsonError('Forbidden: you can only edit your own entries', 403)
   }
@@ -136,12 +152,38 @@ function handleDelete(e, callerEmail) {
   const body = parseBody(e)
   if (!body.id) return jsonError('Missing entry id', 400)
 
+  const existing = findObjectById(ENTRIES_SHEET, body.id)
+  if (!existing) return jsonError('Entry not found', 404)
+
+  // Approved entries are locked – cannot be deleted either
+  if (String(existing.isApproved) === 'true')
+    return jsonError('This entry has been approved and cannot be deleted.', 403)
+
+  return softDelete(e, callerEmail, ENTRIES_SHEET, ENTRY_COLS)
+}
+
+function handleApprove(e, callerEmail) {
+  const body = parseBody(e)
+  if (!body.id) return jsonError('Missing entry id', 400)
+
   const sheet = getSheet(ENTRIES_SHEET)
   const { rowIndex } = findRowById(sheet, body.id)
   if (rowIndex === -1) return jsonError('Entry not found', 404)
 
-  sheet.deleteRow(rowIndex)
-  return jsonOk({ id: body.id }, 'Entry deleted.')
+  const existing = findObjectById(ENTRIES_SHEET, body.id)
+  if (String(existing.isApproved) === 'true')
+    return jsonError('Entry is already approved.', 400)
+
+  const isApprovedIdx = ENTRY_COLS.indexOf('isApproved') + 1
+  const approvedByIdx = ENTRY_COLS.indexOf('approvedBy') + 1
+  const approvedAtIdx = ENTRY_COLS.indexOf('approvedAt') + 1
+  const now = new Date().toISOString()
+
+  sheet.getRange(rowIndex, isApprovedIdx).setValue('true')
+  sheet.getRange(rowIndex, approvedByIdx).setValue(callerEmail)
+  sheet.getRange(rowIndex, approvedAtIdx).setValue(now)
+
+  return jsonOk({ id: body.id, isApproved: 'true', approvedBy: callerEmail, approvedAt: now }, 'Entry approved.')
 }
 
 // ── USER HANDLER ──────────────────────────────────────────────────────────────

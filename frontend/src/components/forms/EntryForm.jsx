@@ -1,22 +1,24 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
 import { validateEntryForm, isFormValid } from '../../utils/validators'
-import { computeAmount, formatCurrency } from '../../utils/helpers'
+import { computeAmount, generateBillNumber, formatBrokerage, formatCurrency } from '../../utils/helpers'
 import { InlineSpinner } from '../common/LoadingSpinner'
 
 const EMPTY_FORM = {
-  date:          '',
-  vehicleCount:  '',
-  vehicleNumber: '',
-  billNumber:    '',
-  buyer:         '',
-  buyerOther:    '',
-  seller:        '',
-  sellerOther:   '',
-  rate:          '',
-  weight:        '',
-  commodity:     '',
-  comment:       '',
+  date:            '',
+  vehicleCount:    '',       // required
+  vehicleNumbers:  [''],     // optional, multiple
+  billNumber:      '',       // auto-generated, read-only
+  buyer:           '',
+  buyerOther:      '',
+  seller:          '',
+  sellerOther:     '',
+  rate:            '',
+  weight:          '',       // QNTL – optional
+  commodity:       '',
+  brokerageType:   'percent', // 'percent' | 'amount'
+  brokerageValue:  '',
+  comment:         '',
 }
 
 /** Build display label for a buyer/seller party */
@@ -29,83 +31,145 @@ const partyLabel = (p) =>
  * EntryForm – handles both Add and Edit modes.
  *
  * Props:
- *   initialData  {object|null}    – null = add mode, object = edit mode
+ *   initialData  {object|null}
  *   onSubmit     {(data) => Promise<boolean>}
  *   onCancel     {() => void}
  *   isEdit       {boolean}
  */
 export default function EntryForm({ initialData = null, onSubmit, onCancel, isEdit = false }) {
-  const { buyers, sellers, commodities } = useApp()
+  const { buyers, sellers, commodities, entries } = useApp()
+
   const [form,       setForm]       = useState(EMPTY_FORM)
   const [errors,     setErrors]     = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [touched,    setTouched]    = useState({})
 
-  // Populate form when editing
+  // ── Populate form ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (initialData) {
-      // Check whether the stored buyer/seller name matches any current party
       const buyerNames  = buyers.map(partyLabel)
       const sellerNames = sellers.map(partyLabel)
+      // vehicleNumber stored as pipe-separated string in the sheet
+      const vehicles = initialData.vehicleNumber
+        ? String(initialData.vehicleNumber).split('|').filter(Boolean)
+        : ['']
+
       setForm({
         ...EMPTY_FORM,
         ...initialData,
-        buyer:       buyerNames.includes(initialData.buyer)   ? initialData.buyer  : 'Other',
-        buyerOther:  buyerNames.includes(initialData.buyer)   ? ''                 : (initialData.buyer  ?? ''),
-        seller:      sellerNames.includes(initialData.seller) ? initialData.seller : 'Other',
-        sellerOther: sellerNames.includes(initialData.seller) ? ''                 : (initialData.seller ?? ''),
+        vehicleCount:    initialData.vehicleCount ?? '',
+        vehicleNumbers:  vehicles,
+        brokerageType:   initialData.brokerageType  || 'percent',
+        brokerageValue:  initialData.brokerageValue ?? '',
+        weight:          initialData.weight ?? '',
+        buyer:           buyerNames.includes(initialData.buyer)   ? initialData.buyer  : 'Other',
+        buyerOther:      buyerNames.includes(initialData.buyer)   ? ''                 : (initialData.buyer  ?? ''),
+        seller:          sellerNames.includes(initialData.seller) ? initialData.seller : 'Other',
+        sellerOther:     sellerNames.includes(initialData.seller) ? ''                 : (initialData.seller ?? ''),
       })
     } else {
-      setForm({ ...EMPTY_FORM, date: new Date().toISOString().slice(0, 10) })
+      const today = new Date().toISOString().slice(0, 10)
+      setForm({
+        ...EMPTY_FORM,
+        date:       today,
+        billNumber: generateBillNumber(entries, today),
+      })
     }
     setErrors({})
     setTouched({})
-  }, [initialData, buyers, sellers])
+  }, [initialData, buyers, sellers, entries])
 
+  // Regenerate bill number when date changes (add mode only)
+  useEffect(() => {
+    if (!initialData && form.date) {
+      setForm(prev => ({ ...prev, billNumber: generateBillNumber(entries, form.date) }))
+    }
+  }, [form.date, initialData, entries])
+
+  // ── Field helpers ──────────────────────────────────────────────────────────
   const handleChange = useCallback((e) => {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
-    setTouched((prev) => ({ ...prev, [name]: true }))
+    setForm(prev => ({ ...prev, [name]: value }))
+    setTouched(prev => ({ ...prev, [name]: true }))
+    // Clear this field's error as soon as the user starts correcting it
+    setErrors(prev => {
+      if (!prev[name]) return prev
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
   }, [])
 
   const handleBlur = useCallback((e) => {
     const { name } = e.target
-    setTouched((prev) => ({ ...prev, [name]: true }))
-    // Validate on blur for touched fields
+    setTouched(prev => ({ ...prev, [name]: true }))
     const allErrors = validateEntryForm({ ...form, [name]: e.target.value })
     setErrors(allErrors)
   }, [form])
 
-  // Derived: estimated amount
+  // ── Vehicle numbers ────────────────────────────────────────────────────────
+  const setVehicle = (idx, value) => {
+    setForm(prev => {
+      const arr = [...prev.vehicleNumbers]
+      arr[idx] = value
+      return { ...prev, vehicleNumbers: arr }
+    })
+    setTouched(prev => ({ ...prev, vehicleNumbers: true }))
+    // Clear vehicle error as soon as the user types anything
+    setErrors(prev => {
+      if (!prev.vehicleNumbers) return prev
+      const next = { ...prev }
+      delete next.vehicleNumbers
+      return next
+    })
+  }
+
+  const addVehicle    = () => setForm(prev => ({ ...prev, vehicleNumbers: [...prev.vehicleNumbers, ''] }))
+  const removeVehicle = (idx) => setForm(prev => ({
+    ...prev,
+    vehicleNumbers: prev.vehicleNumbers.filter((_, i) => i !== idx),
+  }))
+
+  // ── Derived ────────────────────────────────────────────────────────────────
   const estimatedAmount = computeAmount(form.rate, form.weight)
 
+  // Brokerage preview
+  const brokeragePreview = (() => {
+    if (!form.brokerageValue || !estimatedAmount) return null
+    const val = parseFloat(form.brokerageValue)
+    if (isNaN(val)) return null
+    return form.brokerageType === 'percent'
+      ? formatCurrency((estimatedAmount * val) / 100)
+      : formatCurrency(val)
+  })()
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault()
     const allErrors = validateEntryForm(form)
     setErrors(allErrors)
-    // Touch all fields on submit attempt
-    const allTouched = Object.keys(form).reduce((acc, k) => ({ ...acc, [k]: true }), {})
-    setTouched(allTouched)
-
+    setTouched(Object.keys(form).reduce((acc, k) => ({ ...acc, [k]: true }), {}))
     if (!isFormValid(allErrors)) return
 
     setSubmitting(true)
-    // Resolve buyer/seller: if 'Other', use custom text
     const resolvedBuyer  = form.buyer  === 'Other' ? form.buyerOther.trim()  : form.buyer
     const resolvedSeller = form.seller === 'Other' ? form.sellerOther.trim() : form.seller
+    const filledVehicles = form.vehicleNumbers.map(v => v.trim()).filter(Boolean)
 
     const payload = {
       ...(initialData ?? {}),
-      date:          form.date,
-      vehicleCount:  Number(form.vehicleCount),
-      vehicleNumber: form.vehicleNumber.trim(),
-      billNumber:    form.billNumber.trim(),
-      buyer:         resolvedBuyer,
-      seller:        resolvedSeller,
-      rate:          parseFloat(form.rate),
-      weight:        parseFloat(form.weight),
-      commodity:     form.commodity,
-      comment:       form.comment.trim(),
+      date:           form.date,
+      billNumber:     form.billNumber,
+      vehicleCount:   parseInt(form.vehicleCount, 10),
+      vehicleNumber:  filledVehicles.join('|'),   // stored pipe-separated, may be empty
+      buyer:          resolvedBuyer,
+      seller:         resolvedSeller,
+      commodity:      form.commodity,
+      rate:           parseFloat(form.rate),
+      weight:         form.weight !== '' ? parseFloat(form.weight) : '',
+      brokerageType:  form.brokerageType,
+      brokerageValue: parseFloat(form.brokerageValue),
+      comment:        form.comment.trim(),
     }
 
     const success = await onSubmit(payload)
@@ -113,12 +177,13 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
     if (success) setForm(EMPTY_FORM)
   }
 
-  // Helper: show error only for touched + errored fields
   const fieldError = (name) => (touched[name] ? errors[name] : undefined)
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
-      {/* ── Row 1: Date + Vehicle Count ─────────────────────────── */}
+
+      {/* ── Row 1: Date + Bill Number (auto) ────────────────────── */}
       <div className="grid grid-cols-2 gap-4">
         <Field label="Date" required error={fieldError('date')}>
           <input
@@ -127,47 +192,88 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
             value={form.date}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={inputClass(fieldError('date'))}
+            className={inputCls(fieldError('date'))}
           />
         </Field>
-        <Field label="Vehicle Count" required error={fieldError('vehicleCount')}>
-          <input
-            type="number"
-            name="vehicleCount"
-            min="0"
-            placeholder="0"
-            value={form.vehicleCount}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={inputClass(fieldError('vehicleCount'))}
-          />
+
+        <Field label="Bill Number" hint="Auto-generated">
+          <div className="relative">
+            <input
+              type="text"
+              value={form.billNumber}
+              readOnly
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-600 shadow-sm cursor-default select-all"
+            />
+            <span className="absolute inset-y-0 right-2.5 flex items-center">
+              <svg className="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+            </span>
+          </div>
         </Field>
       </div>
 
-      {/* ── Row 2: Vehicle Number + Bill Number ─────────────────── */}
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Vehicle Number" required error={fieldError('vehicleNumber')}>
-          <input
-            type="text"
-            name="vehicleNumber"
-            placeholder="HR 55 AB 1234"
-            value={form.vehicleNumber}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={inputClass(fieldError('vehicleNumber'))}
-          />
-        </Field>
-        <Field label="Bill Number" required error={fieldError('billNumber')}>
-          <input
-            type="text"
-            name="billNumber"
-            placeholder="BILL-001"
-            value={form.billNumber}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={inputClass(fieldError('billNumber'))}
-          />
-        </Field>
+      {/* ── Vehicle Count + Vehicle Numbers ─────────────────────── */}
+      <Field label="Vehicle Count" required error={fieldError('vehicleCount')}>
+        <input
+          type="number"
+          name="vehicleCount"
+          min="1"
+          step="1"
+          placeholder="e.g. 3"
+          value={form.vehicleCount}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={inputCls(fieldError('vehicleCount'))}
+        />
+      </Field>
+
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">
+          Vehicle Numbers
+          <span className="ml-1.5 text-xs font-normal text-gray-400">(optional)</span>
+        </label>
+        <div className="space-y-2">
+          {form.vehicleNumbers.map((veh, idx) => (
+            <div key={idx} className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute inset-y-0 left-3 flex items-center text-xs font-semibold text-gray-400 select-none">
+                  {idx + 1}.
+                </span>
+                <input
+                  type="text"
+                  placeholder="HR 55 AB 1234"
+                  value={veh}
+                  onChange={e => setVehicle(idx, e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 pl-8 text-sm text-gray-800 shadow-sm placeholder-gray-400 transition focus:outline-none focus:ring-2 focus:border-primary-400 focus:ring-primary-100"
+                />
+              </div>
+              {form.vehicleNumbers.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeVehicle(idx)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 transition hover:bg-red-100"
+                  aria-label="Remove vehicle"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addVehicle}
+            className="flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Add another vehicle
+          </button>
+        </div>
       </div>
 
       {/* ── Buyer ───────────────────────────────────────────────── */}
@@ -177,24 +283,17 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
           value={form.buyer}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={inputClass(fieldError('buyer'))}
+          className={inputCls(fieldError('buyer'))}
         >
           <option value="">Select buyer…</option>
-          {buyers.map((b) => {
-            const label = partyLabel(b)
-            return <option key={b.id} value={label}>{label}</option>
-          })}
+          {buyers.map(b => { const l = partyLabel(b); return <option key={b.id} value={l}>{l}</option> })}
           <option value="Other">Other…</option>
         </select>
         {form.buyer === 'Other' && (
           <input
-            type="text"
-            name="buyerOther"
-            placeholder="Enter buyer name"
-            value={form.buyerOther}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={`mt-2 ${inputClass(fieldError('buyerOther'))}`}
+            type="text" name="buyerOther" placeholder="Enter buyer name"
+            value={form.buyerOther} onChange={handleChange} onBlur={handleBlur}
+            className={`mt-2 ${inputCls(fieldError('buyerOther'))}`}
           />
         )}
       </Field>
@@ -206,24 +305,17 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
           value={form.seller}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={inputClass(fieldError('seller'))}
+          className={inputCls(fieldError('seller'))}
         >
           <option value="">Select seller…</option>
-          {sellers.map((s) => {
-            const label = partyLabel(s)
-            return <option key={s.id} value={label}>{label}</option>
-          })}
+          {sellers.map(s => { const l = partyLabel(s); return <option key={s.id} value={l}>{l}</option> })}
           <option value="Other">Other…</option>
         </select>
         {form.seller === 'Other' && (
           <input
-            type="text"
-            name="sellerOther"
-            placeholder="Enter seller name"
-            value={form.sellerOther}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={`mt-2 ${inputClass(fieldError('sellerOther'))}`}
+            type="text" name="sellerOther" placeholder="Enter seller name"
+            value={form.sellerOther} onChange={handleChange} onBlur={handleBlur}
+            className={`mt-2 ${inputCls(fieldError('sellerOther'))}`}
           />
         )}
       </Field>
@@ -235,78 +327,88 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
           value={form.commodity}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={inputClass(fieldError('commodity'))}
+          className={inputCls(fieldError('commodity'))}
         >
           <option value="">Select commodity…</option>
-          {commodities.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+          {commodities.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
         </select>
       </Field>
 
-      {/* ── Row 4: Rate + Weight ────────────────────────────────── */}
+      {/* ── Rate + Weight (QNTL) ────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Rate (₹ per kg)" required error={fieldError('rate')}>
+        <Field label="Rate (₹ / Qtl)" required error={fieldError('rate')}>
           <input
-            type="number"
-            name="rate"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-            value={form.rate}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={inputClass(fieldError('rate'))}
+            type="number" name="rate" min="0" step="0.01" placeholder="0.00"
+            value={form.rate} onChange={handleChange} onBlur={handleBlur}
+            className={inputCls(fieldError('rate'))}
           />
         </Field>
-        <Field label="Weight (kg)" required error={fieldError('weight')}>
+        <Field label="Weight (Qtl)" hint="optional" error={fieldError('weight')}>
           <input
-            type="number"
-            name="weight"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-            value={form.weight}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={inputClass(fieldError('weight'))}
+            type="number" name="weight" min="0" step="0.001" placeholder="0.000"
+            value={form.weight} onChange={handleChange} onBlur={handleBlur}
+            className={inputCls(fieldError('weight'))}
           />
         </Field>
       </div>
 
-      {/* Estimated amount */}
-      {estimatedAmount !== null && (
-        <div className="rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-2.5 flex items-center justify-between">
-          <span className="text-sm font-medium text-emerald-700">Estimated Total</span>
-          <span className="text-base font-bold text-emerald-800">{formatCurrency(estimatedAmount)}</span>
+      {/* ── Brokerage ───────────────────────────────────────────── */}
+      <Field label="Brokerage" required error={fieldError('brokerageValue')}>
+        <div className="flex gap-2">
+          {/* Type toggle */}
+          <div className="flex shrink-0 rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
+            <BrokerageTypeBtn
+              active={form.brokerageType === 'percent'}
+              onClick={() => setForm(prev => ({ ...prev, brokerageType: 'percent' }))}
+              label="%" title="Percentage"
+            />
+            <BrokerageTypeBtn
+              active={form.brokerageType === 'amount'}
+              onClick={() => setForm(prev => ({ ...prev, brokerageType: 'amount' }))}
+              label="₹" title="Flat Amount"
+            />
+          </div>
+          {/* Value input */}
+          <input
+            type="number"
+            name="brokerageValue"
+            min="0"
+            step={form.brokerageType === 'percent' ? '0.01' : '1'}
+            placeholder={form.brokerageType === 'percent' ? 'e.g. 2.5' : 'e.g. 500'}
+            value={form.brokerageValue}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className={`flex-1 ${inputCls(fieldError('brokerageValue'))}`}
+          />
         </div>
-      )}
+        {/* Brokerage amount preview when type=percent and we have a total */}
+        {brokeragePreview && form.brokerageType === 'percent' && (
+          <p className="mt-1 text-xs text-gray-500">
+            = {brokeragePreview} on estimated total
+          </p>
+        )}
+      </Field>
 
       {/* ── Comment ─────────────────────────────────────────────── */}
       <Field label="Comment" error={fieldError('comment')}>
         <textarea
-          name="comment"
-          rows={2}
-          placeholder="Optional notes…"
-          value={form.comment}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className={`resize-none ${inputClass(fieldError('comment'))}`}
+          name="comment" rows={2} placeholder="Optional notes…"
+          value={form.comment} onChange={handleChange} onBlur={handleBlur}
+          className={`resize-none ${inputCls(fieldError('comment'))}`}
         />
       </Field>
 
       {/* ── Actions ─────────────────────────────────────────────── */}
       <div className="flex justify-end gap-3 pt-2">
         <button
-          type="button"
-          onClick={onCancel}
-          disabled={submitting}
-          className="rounded-lg border border-gray-200 bg-white px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+          type="button" onClick={onCancel} disabled={submitting}
+          className="rounded-lg border border-gray-200 bg-white px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
         >
           Cancel
         </button>
         <button
-          type="submit"
-          disabled={submitting}
-          className="flex items-center gap-2 rounded-lg bg-primary-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-400 disabled:opacity-60"
+          type="submit" disabled={submitting}
+          className="flex items-center gap-2 rounded-lg bg-primary-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
         >
           {submitting && <InlineSpinner />}
           {isEdit ? 'Update Entry' : 'Add Entry'}
@@ -316,14 +418,15 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
   )
 }
 
-// ── Small helper components ──────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-function Field({ label, required, error, children }) {
+function Field({ label, required, hint, error, children }) {
   return (
     <div className="space-y-1">
       <label className="block text-sm font-medium text-gray-700">
         {label}
         {required && <span className="ml-0.5 text-red-500">*</span>}
+        {hint && <span className="ml-1.5 text-xs font-normal text-gray-400">({hint})</span>}
       </label>
       {children}
       {error && <p className="text-xs text-red-500">{error}</p>}
@@ -331,11 +434,26 @@ function Field({ label, required, error, children }) {
   )
 }
 
-const inputClass = (error) =>
-  `w-full rounded-lg border px-3 py-2 text-sm text-gray-800 shadow-sm transition placeholder-gray-400
-   focus:outline-none focus:ring-2
-   ${
-     error
-       ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100'
-       : 'border-gray-200 bg-white focus:border-primary-400 focus:ring-primary-100'
-   }`
+function BrokerageTypeBtn({ active, onClick, label, title }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={`px-3.5 py-2 text-sm font-bold transition ${
+        active
+          ? 'bg-primary-600 text-white'
+          : 'bg-white text-gray-500 hover:bg-gray-50'
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
+const inputCls = (err) =>
+  `w-full rounded-lg border px-3 py-2 text-sm text-gray-800 shadow-sm placeholder-gray-400
+   transition focus:outline-none focus:ring-2
+   ${err
+     ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100'
+     : 'border-gray-200 bg-white focus:border-primary-400 focus:ring-primary-100'}`

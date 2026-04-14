@@ -7,6 +7,7 @@ import DataCard from '../components/dashboard/DataCard'
 import Pagination from '../components/dashboard/Pagination'
 import Modal from '../components/common/Modal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
+import DownloadModal from '../components/dashboard/DownloadModal'
 import EntryForm from '../components/forms/EntryForm'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import { useApp } from '../context/AppContext'
@@ -19,15 +20,14 @@ import { useManage } from '../hooks/useManage'
 export default function DashboardPage() {
   const { isLoading, error, showAddModal, showEditModal, editingEntry, openAddModal, closeAddModal, openEditModal, closeEditModal } = useApp()
   const { roleLoading } = useAuth()
-  const { loadEntries, addEntry, updateEntry, deleteEntry } = useEntries()
+  const { loadEntries, addEntry, updateEntry, deleteEntry, approveEntry } = useEntries()
   const { data: entries, totalCount, totalPages } = useFilteredEntries()
   const { confirmState, requestConfirm, handleConfirm, handleCancel } = useConfirm()
   const { loadMasterData } = useManage()
 
   // View mode: 'table' on desktop, 'cards' on mobile
-  const [viewMode, setViewMode] = useState(() =>
-    window.innerWidth < 768 ? 'cards' : 'table'
-  )
+  const [viewMode,      setViewMode]      = useState(() => window.innerWidth < 768 ? 'cards' : 'table')
+  const [showDownload,  setShowDownload]  = useState(false)
 
   // Load entries + master data on mount (parallel)
   useEffect(() => {
@@ -53,6 +53,14 @@ export default function DashboardPage() {
     })
   }
 
+  const handleApproveClick = (entry) => {
+    requestConfirm({
+      title:     'Approve Entry',
+      message:   `Approve Bill ${entry.billNumber}? Once approved, nobody — including admins — can edit or delete it.`,
+      onConfirm: () => approveEntry(entry),
+    })
+  }
+
   if (roleLoading) return <LoadingSpinner message="Verifying access…" />
 
   return (
@@ -66,6 +74,19 @@ export default function DashboardPage() {
               Manage and track all mandi transactions
             </p>
           </div>
+          <div className="flex items-center gap-2">
+          {/* Download CSV button */}
+          <button
+            onClick={() => setShowDownload(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:bg-gray-50 hover:text-primary-700"
+            title="Download CSV"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            <span className="hidden sm:inline">Export</span>
+          </button>
+
           {/* View toggle (desktop only) */}
           <div className="hidden md:flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
             <ViewToggleBtn active={viewMode === 'table'} onClick={() => setViewMode('table')} label="Table">
@@ -78,6 +99,7 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
               </svg>
             </ViewToggleBtn>
+          </div>
           </div>
         </div>
 
@@ -116,12 +138,14 @@ export default function DashboardPage() {
             entries={entries}
             onEdit={handleEditClick}
             onDelete={handleDeleteClick}
+            onApprove={handleApproveClick}
           />
         ) : (
           <DataCard
             entries={entries}
             onEdit={handleEditClick}
             onDelete={handleDeleteClick}
+            onApprove={handleApproveClick}
           />
         )}
 
@@ -160,15 +184,21 @@ export default function DashboardPage() {
         />
       </Modal>
 
-      {/* ── Confirm Delete ──────────────────────────────────────────── */}
+      {/* ── Download CSV Modal ─────────────────────────────────────── */}
+      <DownloadModal
+        isOpen={showDownload}
+        onClose={() => setShowDownload(false)}
+      />
+
+      {/* ── Confirm Dialog (Delete / Approve) ──────────────────────── */}
       <ConfirmDialog
         isOpen={confirmState.isOpen}
         title={confirmState.title}
         message={confirmState.message}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
-        confirmText="Delete"
-        danger
+        confirmText={confirmState.title?.startsWith('Approve') ? 'Approve' : 'Delete'}
+        danger={!confirmState.title?.startsWith('Approve')}
       />
     </Layout>
   )

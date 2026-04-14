@@ -10,9 +10,9 @@ const initialState = {
   sellers:       [],
   commodities:   [],
   masterLoading: false,
-  // UI
+  // UI – default to today so the list opens showing only the last 24 h of entries
   searchQuery:   '',
-  filterDate:    '',
+  filterDate:    new Date().toISOString().slice(0, 10),
   currentPage:   1,
   pageSize:      15,
   sortColumn:    'date',
@@ -39,6 +39,13 @@ function appReducer(state, action) {
       }
     case 'DELETE_ENTRY':
       return { ...state, entries: state.entries.filter((e) => e.id !== action.payload) }
+    case 'APPROVE_ENTRY':
+      return {
+        ...state,
+        entries: state.entries.map((e) =>
+          e.id === action.payload.id ? { ...e, ...action.payload } : e
+        ),
+      }
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload }
     case 'SET_ERROR':
@@ -110,6 +117,7 @@ export function AppProvider({ children }) {
   const addEntry       = useCallback((v)        => dispatch({ type: 'ADD_ENTRY',         payload: v }),                            [])
   const updateEntry    = useCallback((v)        => dispatch({ type: 'UPDATE_ENTRY',      payload: v }),                            [])
   const deleteEntry    = useCallback((id)       => dispatch({ type: 'DELETE_ENTRY',      payload: id }),                           [])
+  const approveEntry   = useCallback((v)        => dispatch({ type: 'APPROVE_ENTRY',     payload: v }),                            [])
   const setLoading     = useCallback((v)        => dispatch({ type: 'SET_LOADING',       payload: v }),                            [])
   const setError       = useCallback((v)        => dispatch({ type: 'SET_ERROR',         payload: v }),                            [])
   const setSearch      = useCallback((v)        => dispatch({ type: 'SET_SEARCH',        payload: v }),                            [])
@@ -140,7 +148,7 @@ export function AppProvider({ children }) {
   const value = {
     ...state,
     // Entries
-    setEntries, addEntry, updateEntry, deleteEntry,
+    setEntries, addEntry, updateEntry, deleteEntry, approveEntry,
     setLoading, setError,
     setSearch, setFilterDate, setPage, setPageSize, setSort,
     openAddModal, closeAddModal, openEditModal, closeEditModal,

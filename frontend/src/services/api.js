@@ -44,9 +44,10 @@ function unwrap(payload) {
 // ── Entries ───────────────────────────────────────────────────────────────────
 
 export const fetchEntries  = ()          => gasGet({ action: 'list' })
-export const addEntry      = (data)      => gasGet({ action: 'add',    data: JSON.stringify(data) })
-export const updateEntry   = (data)      => gasGet({ action: 'update', data: JSON.stringify(data) })
-export const deleteEntry   = (id)        => gasGet({ action: 'delete', data: JSON.stringify({ id }) })
+export const addEntry      = (data)      => gasGet({ action: 'add',     data: JSON.stringify(data) })
+export const updateEntry   = (data)      => gasGet({ action: 'update',  data: JSON.stringify(data) })
+export const deleteEntry   = (id)        => gasGet({ action: 'delete',  data: JSON.stringify({ id }) })
+export const approveEntry  = (id)        => gasGet({ action: 'approve', data: JSON.stringify({ id }) })
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 
