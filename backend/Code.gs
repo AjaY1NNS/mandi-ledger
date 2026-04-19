@@ -111,7 +111,7 @@ function handleList() {
 
 function handleAdd(e, callerEmail) {
   const body = parseBody(e)
-  validateRequired(body, ['id','date','vehicleNumber','billNumber','buyer','seller','commodity','rate'])
+  validateRequired(body, ['id','date','commodity'])
   const sheet = getSheet(ENTRIES_SHEET)
   sheet.appendRow(ENTRY_COLS.map(col => {
     if (col === 'isDeleted')  return 'false'
@@ -216,7 +216,7 @@ function handleListParties(sheetName) {
 function handleAddParty(e, callerEmail, sheetName) {
   requireAdmin(callerEmail)
   const body = parseBody(e)
-  validateRequired(body, ['id', 'firstName', 'lastName', 'address'])
+  validateRequired(body, ['id', 'firmName'])
 
   const sheet = getSheet(sheetName)
   const now   = new Date().toISOString()

@@ -75,7 +75,7 @@ export default function BuyerSellerForm({ type, initialData = null, onSubmit, on
 
   const validatePhone = (val) => {
     const stripped = val.replace(/[\s\-()]/g, '')
-    if (!stripped) return 'Contact number is required.'
+    if (!stripped) return null                  // contact number is optional
     if (!PHONE_RE.test(stripped)) return 'Enter a valid 10-digit mobile number (e.g. 98765 43210).'
     return null
   }
@@ -88,15 +88,13 @@ export default function BuyerSellerForm({ type, initialData = null, onSubmit, on
 
   const validate = (f) => {
     const e = {}
-    if (!f.firstName.trim()) e.firstName = 'First name is required.'
-    if (!f.lastName.trim())  e.lastName  = 'Last name is required.'
-    if (!f.address.trim())   e.address   = 'Address is required.'
+    if (!f.firmName.trim()) e.firmName = 'Firm name is required.'
 
-    // Validate each contact number individually
+    // Validate each contact number only if filled
     const contactErrs = f.contactNos.map(validatePhone)
-    if (contactErrs.some(Boolean)) e.contactNos = contactErrs   // array of per-index errors
+    if (contactErrs.some(Boolean)) e.contactNos = contactErrs
 
-    // Validate each email individually (only if filled)
+    // Validate each email only if filled
     const emailErrs = f.emails.map(validateEmail)
     if (emailErrs.some(Boolean)) e.emails = emailErrs
 
@@ -130,7 +128,7 @@ export default function BuyerSellerForm({ type, initialData = null, onSubmit, on
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
       {/* ── Name row ────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="First Name" required error={errors.firstName}>
+        <Field label="First Name" error={errors.firstName}>
           <input
             type="text"
             placeholder="Ramesh"
@@ -139,7 +137,7 @@ export default function BuyerSellerForm({ type, initialData = null, onSubmit, on
             className={input(errors.firstName)}
           />
         </Field>
-        <Field label="Last Name" required error={errors.lastName}>
+        <Field label="Last Name" error={errors.lastName}>
           <input
             type="text"
             placeholder="Kumar"
@@ -151,18 +149,18 @@ export default function BuyerSellerForm({ type, initialData = null, onSubmit, on
       </div>
 
       {/* ── Firm Name ───────────────────────────────────────────── */}
-      <Field label="Firm Name">
+      <Field label="Firm Name" required error={errors.firmName}>
         <input
           type="text"
-          placeholder="Kumar Traders (optional)"
+          placeholder="Kumar Traders"
           value={form.firmName}
           onChange={e => setField('firmName', e.target.value)}
-          className={input()}
+          className={input(errors.firmName)}
         />
       </Field>
 
       {/* ── Address ─────────────────────────────────────────────── */}
-      <Field label="Address" required error={errors.address}>
+      <Field label="Address" error={errors.address}>
         <textarea
           rows={2}
           placeholder="Village / City, District, State"
@@ -175,7 +173,8 @@ export default function BuyerSellerForm({ type, initialData = null, onSubmit, on
       {/* ── Contact Numbers ─────────────────────────────────────── */}
       <div className="space-y-1">
         <label className="block text-sm font-medium text-gray-700">
-          Contact Numbers <span className="text-red-500">*</span>
+          Contact Numbers
+          <span className="ml-1.5 text-xs font-normal text-gray-400">(optional)</span>
         </label>
         <div className="space-y-2">
           {form.contactNos.map((num, idx) => {

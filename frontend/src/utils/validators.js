@@ -42,10 +42,8 @@ export const validateEntryForm = (data) => {
 
   // ── Required fields ─────────────────────────────────────────────────────
   const dateErr      = validDate(data.date)
-  const buyerErr     = required(data.buyer,     'Buyer')
-  const sellerErr    = required(data.seller,    'Seller')
   const commodityErr = required(data.commodity, 'Commodity')
-  const rateErr      = positiveNumber(data.rate, 'Rate')
+  const rateErr      = optionalPositiveNumber(data.rate, 'Rate (₹ / QNTL)')
 
   if (dateErr)      errors.date      = dateErr
   if (rateErr)      errors.rate      = rateErr
@@ -66,21 +64,17 @@ export const validateEntryForm = (data) => {
   // ── Vehicle numbers – optional; just skip empty rows ─────────────────────
   // (no error if all rows are blank)
 
-  // ── Brokerage – required, value must be positive ─────────────────────────
-  const brokerageErr = positiveNumber(data.brokerageValue, 'Brokerage')
+  // ── Brokerage – optional, but must be positive if provided ──────────────
+  const brokerageErr = optionalPositiveNumber(data.brokerageValue, 'Brokerage')
   if (brokerageErr) errors.brokerageValue = brokerageErr
 
-  // ── Buyer "Other" input ───────────────────────────────────────────────────
-  if (buyerErr) {
-    errors.buyer = buyerErr
-  } else if (data.buyer === 'Other' && !data.buyerOther?.trim()) {
+  // ── Buyer "Other" input – only validate if buyer is selected as Other ────
+  if (data.buyer === 'Other' && !data.buyerOther?.trim()) {
     errors.buyerOther = 'Please specify the buyer name.'
   }
 
-  // ── Seller "Other" input ──────────────────────────────────────────────────
-  if (sellerErr) {
-    errors.seller = sellerErr
-  } else if (data.seller === 'Other' && !data.sellerOther?.trim()) {
+  // ── Seller "Other" input – only validate if seller is selected as Other ──
+  if (data.seller === 'Other' && !data.sellerOther?.trim()) {
     errors.sellerOther = 'Please specify the seller name.'
   }
 

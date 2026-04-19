@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
 import { validateEntryForm, isFormValid } from '../../utils/validators'
-import { computeAmount, generateBillNumber, formatBrokerage, formatCurrency } from '../../utils/helpers'
+import { computeAmount, formatBrokerage, formatCurrency } from '../../utils/helpers'
 import { InlineSpinner } from '../common/LoadingSpinner'
 
 const EMPTY_FORM = {
   date:            '',
   vehicleCount:    '',       // required
   vehicleNumbers:  [''],     // optional, multiple
-  billNumber:      '',       // auto-generated, read-only
+  billNumber:      '',       // optional, free-text
   buyer:           '',
   buyerOther:      '',
   seller:          '',
@@ -85,22 +85,11 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
       })
     } else {
       const today = new Date().toISOString().slice(0, 10)
-      setForm({
-        ...EMPTY_FORM,
-        date:       today,
-        billNumber: generateBillNumber(entries, today),
-      })
+      setForm({ ...EMPTY_FORM, date: today })
     }
     setErrors({})
     setTouched({})
   }, [initialData, buyers, sellers, entries])
-
-  // Regenerate bill number when date changes (add mode only)
-  useEffect(() => {
-    if (!initialData && form.date) {
-      setForm(prev => ({ ...prev, billNumber: generateBillNumber(entries, form.date) }))
-    }
-  }, [form.date, initialData, entries])
 
   // ── Field helpers ──────────────────────────────────────────────────────────
   const handleChange = useCallback((e) => {
@@ -181,10 +170,10 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
       buyer:          resolvedBuyer,
       seller:         resolvedSeller,
       commodity:      form.commodity,
-      rate:           parseFloat(form.rate),
+      rate:           form.rate !== '' ? parseFloat(form.rate) : '',
       weight:         form.weight !== '' ? parseFloat(form.weight) : '',
       brokerageType:  form.brokerageType,
-      brokerageValue: parseFloat(form.brokerageValue),
+      brokerageValue: form.brokerageValue !== '' ? parseFloat(form.brokerageValue) : '',
       comment:        form.comment.trim(),
     }
 
@@ -212,20 +201,15 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
           />
         </Field>
 
-        <Field label="Bill Number" hint="Auto-generated">
-          <div className="relative">
-            <input
-              type="text"
-              value={form.billNumber}
-              readOnly
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-600 shadow-sm cursor-default select-all"
-            />
-            <span className="absolute inset-y-0 right-2.5 flex items-center">
-              <svg className="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-              </svg>
-            </span>
-          </div>
+        <Field label="Bill Number" hint="optional">
+          <input
+            type="text"
+            name="billNumber"
+            placeholder="e.g. 1234"
+            value={form.billNumber}
+            onChange={handleChange}
+            className={inputCls()}
+          />
         </Field>
       </div>
 
@@ -293,7 +277,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
       </div>
 
       {/* ── Buyer ───────────────────────────────────────────────── */}
-      <Field label="Buyer" required error={fieldError('buyer') || fieldError('buyerOther')}>
+      <Field label="Buyer" error={fieldError('buyer') || fieldError('buyerOther')}>
         <select
           name="buyer"
           value={form.buyer}
@@ -315,7 +299,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
       </Field>
 
       {/* ── Seller ──────────────────────────────────────────────── */}
-      <Field label="Seller" required error={fieldError('seller') || fieldError('sellerOther')}>
+      <Field label="Seller" error={fieldError('seller') || fieldError('sellerOther')}>
         <select
           name="seller"
           value={form.seller}
@@ -352,14 +336,14 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
 
       {/* ── Rate + Weight (QNTL) ────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Rate (₹ / Qtl)" required error={fieldError('rate')}>
+        <Field label="Rate (₹ / QNTL)" hint="optional" error={fieldError('rate')}>
           <input
             type="number" name="rate" min="0" step="0.01" placeholder="0.00"
             value={form.rate} onChange={handleChange} onBlur={handleBlur}
             className={inputCls(fieldError('rate'))}
           />
         </Field>
-        <Field label="Weight (Qtl)" hint="optional" error={fieldError('weight')}>
+        <Field label="Weight (QNTL)" error={fieldError('weight')}>
           <input
             type="number" name="weight" min="0" step="0.001" placeholder="0.000"
             value={form.weight} onChange={handleChange} onBlur={handleBlur}
@@ -369,7 +353,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
       </div>
 
       {/* ── Brokerage ───────────────────────────────────────────── */}
-      <Field label="Brokerage" required error={fieldError('brokerageValue')}>
+      <Field label="Brokerage Rate (₹ / QNTL)" error={fieldError('brokerageValue')}>
         <div className="flex gap-2">
           {/* Type toggle */}
           <div className="flex shrink-0 rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
