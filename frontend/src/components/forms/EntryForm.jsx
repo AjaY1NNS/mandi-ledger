@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
 import { validateEntryForm, isFormValid } from '../../utils/validators'
 import { computeAmount, formatBrokerage, formatCurrency } from '../../utils/helpers'
+import { toLocalDateStr } from '../../utils/dateFormate'
 import { InlineSpinner } from '../common/LoadingSpinner'
 
 const EMPTY_FORM = {
@@ -82,7 +83,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
         sellerOther:     sellerNames.includes(initialData.seller) ? ''                 : (initialData.seller ?? ''),
       })
     } else {
-      const today = new Date().toISOString().slice(0, 10)
+      const today = toLocalDateStr(new Date())
       setForm({ ...EMPTY_FORM, date: today })
     }
     setErrors({})

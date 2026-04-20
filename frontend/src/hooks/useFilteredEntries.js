@@ -1,55 +1,7 @@
 import { useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
-
-/**
- * Normalise any date value Google Sheets might return into YYYY-MM-DD.
- * Sheets can return: "2026-04-14", "2026-04-14T00:00:00.000Z",
- * "4/14/2026", or a numeric serial — all need to land on the same string.
- */
-function toYMD(raw) {
-  if (!raw && raw !== 0) return '';
-  const s = String(raw).trim();
-
-  // Already YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-
-  // ISO datetime or any parseable date — convert to LOCAL date
-  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
-    const d = new Date(s);
-    if (!isNaN(d)) {
-      // Use local year/month/day instead of UTC
-      const yyyy = d.getFullYear();
-      const mm   = String(d.getMonth() + 1).padStart(2, '0');
-      const dd   = String(d.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
-    }
-  }
-
-  // Numeric serial (Sheets epoch = Dec 30 1899)
-  if (/^\d+(\.\d+)?$/.test(s)) {
-    const serial = parseFloat(s);
-    const epoch  = new Date(Date.UTC(1899, 11, 30));
-    const d      = new Date(epoch.getTime() + serial * 86400000);
-    const yyyy   = d.getFullYear();
-    const mm     = String(d.getMonth() + 1).padStart(2, '0');
-    const dd     = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  // Fallback
-  try {
-    const d = new Date(s);
-    if (!isNaN(d)) {
-      const yyyy = d.getFullYear();
-      const mm   = String(d.getMonth() + 1).padStart(2, '0');
-      const dd   = String(d.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
-    }
-  } catch {}
-
-  return s;
-}
+import { toYMD } from '../utils/dateFormate'
 
 /**
  * Returns a filtered, sorted, and paginated slice of entries

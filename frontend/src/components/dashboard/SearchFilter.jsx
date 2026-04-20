@@ -1,28 +1,24 @@
 import { useApp } from '../../context/AppContext'
-
-/** Local-timezone YYYY-MM-DD string for a Date object (defaults to today) */
-function localYMD(d = new Date()) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+import { toLocalDateStr } from '../../utils/dateFormate'
 
 function presetRange(days) {
   const to   = new Date()
   const from = new Date()
   from.setDate(from.getDate() - (days - 1))
-  return { from: localYMD(from), to: localYMD(to) }
+  return { from: toLocalDateStr(from), to: toLocalDateStr(to) }
 }
 
 function thisWeekRange() {
   const today = new Date()
-  const day   = today.getDay()            // 0 = Sun
-  const diff  = day === 0 ? -6 : 1 - day // roll back to Monday
+  const day   = today.getDay()
+  const diff  = day === 0 ? -6 : 1 - day
   const from  = new Date(today)
   from.setDate(today.getDate() + diff)
-  return { from: localYMD(from), to: localYMD(today) }
+  return { from: toLocalDateStr(from), to: toLocalDateStr(today) }
 }
 
 const PRESETS = [
-  { label: 'Today',      getRange: () => { const t = localYMD(); return { from: t, to: t } } },
+  { label: 'Today',      getRange: () => { const t = toLocalDateStr(new Date()); return { from: t, to: t } } },
   { label: 'This Week',  getRange: () => thisWeekRange() },
   // { label: 'Last 7d',    getRange: () => presetRange(7)   },
   { label: 'Last Month', getRange: () => presetRange(30)  },

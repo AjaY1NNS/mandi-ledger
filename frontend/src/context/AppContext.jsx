@@ -1,4 +1,5 @@
 import { createContext, useContext, useReducer, useCallback } from 'react'
+import { toLocalDateStr } from '../utils/dateFormate'
 
 // ── State shape ───────────────────────────────────────────────────────────────
 const initialState = {
@@ -12,8 +13,8 @@ const initialState = {
   masterLoading: false,
   // UI – default to Last 24h (today only, date-level granularity)
   searchQuery:   '',
-  filterFrom:    new Date().toISOString().slice(0, 10),
-  filterTo:      new Date().toISOString().slice(0, 10),
+  filterFrom:    toLocalDateStr(new Date()),
+  filterTo:      toLocalDateStr(new Date()),
   currentPage:   1,
   pageSize:      10,
   sortColumn:    'date',
