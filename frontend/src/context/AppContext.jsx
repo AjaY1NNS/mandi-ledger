@@ -15,7 +15,7 @@ const initialState = {
   filterFrom:    new Date().toISOString().slice(0, 10),
   filterTo:      new Date().toISOString().slice(0, 10),
   currentPage:   1,
-  pageSize:      15,
+  pageSize:      10,
   sortColumn:    'date',
   sortDirection: 'desc',  // 'asc' | 'desc'
   // Modals

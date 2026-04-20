@@ -71,9 +71,13 @@ function handleRequest(e) {
       case 'update':          return handleUpdate(e, callerEmail)
       case 'delete':          return handleDelete(e, callerEmail)
       case 'approve':         return handleApprove(e, callerEmail)
+      case 'restore':         return handleRestoreEntry(e, callerEmail)
 
       // ── Users ─────────────────────────────────────────────────────────────
       case 'getUser':         return handleGetUser(e.parameter?.email || callerEmail)
+
+      // ── Archive ───────────────────────────────────────────────────────────
+      case 'listDeletedEntries': return handleListDeletedEntries(callerEmail)
 
       // ── Buyers ────────────────────────────────────────────────────────────
       case 'listBuyers':      return handleListParties(BUYERS_SHEET)
@@ -184,6 +188,36 @@ function handleApprove(e, callerEmail) {
   sheet.getRange(rowIndex, approvedAtIdx).setValue(now)
 
   return jsonOk({ id: body.id, isApproved: 'true', approvedBy: callerEmail, approvedAt: now }, 'Entry approved.')
+}
+
+// ── ARCHIVE HANDLERS ─────────────────────────────────────────────────────────
+
+function handleListDeletedEntries(callerEmail) {
+  requireAdmin(callerEmail)
+  const sheet = getSheet(ENTRIES_SHEET)
+  const all   = sheetToObjects(sheet)
+  return jsonOk(all.filter(r => String(r.isDeleted) === 'true'))
+}
+
+function handleRestoreEntry(e, callerEmail) {
+  requireAdmin(callerEmail)
+  const body = parseBody(e)
+  if (!body.id) return jsonError('Missing entry id', 400)
+
+  const sheet = getSheet(ENTRIES_SHEET)
+  const { rowIndex } = findRowById(sheet, body.id)
+  if (rowIndex === -1) return jsonError('Entry not found', 404)
+
+  const isDeletedIdx = ENTRY_COLS.indexOf('isDeleted') + 1
+  const updatedAtIdx = ENTRY_COLS.indexOf('updatedAt') + 1
+  const updatedByIdx = ENTRY_COLS.indexOf('updatedBy') + 1
+  const now = new Date().toISOString()
+
+  sheet.getRange(rowIndex, isDeletedIdx).setValue('false')
+  if (updatedAtIdx > 0) sheet.getRange(rowIndex, updatedAtIdx).setValue(now)
+  if (updatedByIdx > 0) sheet.getRange(rowIndex, updatedByIdx).setValue(callerEmail)
+
+  return jsonOk({ id: body.id }, 'Entry restored successfully.')
 }
 
 // ── USER HANDLER ──────────────────────────────────────────────────────────────

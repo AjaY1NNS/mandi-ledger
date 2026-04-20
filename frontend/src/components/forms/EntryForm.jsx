@@ -23,9 +23,7 @@ const EMPTY_FORM = {
 
 /** Build display label for a buyer/seller party */
 const partyLabel = (p) =>
-  p.firmName
-    ? `${p.firstName} ${p.lastName} — ${p.firmName}`
-    : `${p.firstName} ${p.lastName}`
+  p.firmName || `${p.firstName} ${p.lastName}`.trim()
 
 /**
  * EntryForm – handles both Add and Edit modes.
@@ -176,6 +174,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
       brokerageValue: form.brokerageValue !== '' ? parseFloat(form.brokerageValue) : '',
       comment:        form.comment.trim(),
     }
+    console.log('Submitting form with payload:', payload) // Debug: check payload before submission
 
     const success = await onSubmit(payload)
     setSubmitting(false)

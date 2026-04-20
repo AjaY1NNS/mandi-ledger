@@ -4,6 +4,7 @@ import { AppProvider } from './context/AppContext'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import ManagePage from './pages/ManagePage'
+import ArchivePage from './pages/ArchivePage'
 import LoadingSpinner from './components/common/LoadingSpinner'
 
 /** Redirects unauthenticated users to /login */
@@ -30,6 +31,10 @@ function AppRoutes() {
         <Route
           path="/manage"
           element={<ProtectedRoute><ManagePage /></ProtectedRoute>}
+        />
+        <Route
+          path="/archive"
+          element={<ProtectedRoute><ArchivePage /></ProtectedRoute>}
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -75,6 +75,13 @@ export default function DataCard({ entries, onEdit, onDelete, onApprove }) {
               </div>
             </div>
 
+            {/* Vehicle Count */}
+            {entry.vehicleCount && (
+              <p className="mt-1 text-xs text-gray-500">
+                Vehicles: <span className="font-medium text-gray-700">{entry.vehicleCount}</span>
+              </p>
+            )}
+
             {/* Rate / Weight / Brokerage */}
             <div className="mt-3 flex items-center gap-4">
               <div>

@@ -24,7 +24,7 @@ function thisWeekRange() {
 const PRESETS = [
   { label: 'Today',      getRange: () => { const t = localYMD(); return { from: t, to: t } } },
   { label: 'This Week',  getRange: () => thisWeekRange() },
-  { label: 'Last 7d',    getRange: () => presetRange(7)   },
+  // { label: 'Last 7d',    getRange: () => presetRange(7)   },
   { label: 'Last Month', getRange: () => presetRange(30)  },
   { label: 'Last 3 Mon', getRange: () => presetRange(90)  },
   { label: 'Last 6 Mon', getRange: () => presetRange(180) },

@@ -86,6 +86,9 @@ export default function DataTable({ entries, onEdit, onDelete, onApprove }) {
                 <td className="whitespace-nowrap px-4 py-3 text-gray-700">
                   {formatDate(entry.date)}
                 </td>
+                <td className="whitespace-nowrap px-4 py-3 text-center text-gray-700">
+                  {entry.vehicleCount ?? '—'}
+                </td>
                 <td className="px-4 py-3 text-sm font-medium text-gray-900 max-w-[160px]">
                   <span title={formatVehicleNumbers(entry.vehicleNumber)}>
                     {formatVehicleNumbers(entry.vehicleNumber)}
