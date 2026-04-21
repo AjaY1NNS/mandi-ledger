@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
 import Modal from '../common/Modal'
 import { formatVehicleNumbers } from '../../utils/helpers'
+import { toLocalDateStr, toYMD } from '../../utils/dateFormate'
 
 // ── Quick preset ranges ───────────────────────────────────────────────────────
 const PRESETS = [
@@ -13,32 +14,11 @@ const PRESETS = [
   { label: 'Last Year',   days: 365 },
 ]
 
-// ✅ Get local date string (YYYY-MM-DD) from any Date object
-function toDateStr(d) {
-  const yyyy = d.getFullYear()
-  const mm   = String(d.getMonth() + 1).padStart(2, '0')
-  const dd   = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-// ✅ Convert any date value (ISO string, serial, plain date) to local YYYY-MM-DD
-function toYMD(raw) {
-  if (!raw && raw !== 0) return ''
-  const s = String(raw).trim()
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s          // already YYYY-MM-DD
-  if (/^\d+(\.\d+)?$/.test(s)) {                        // numeric serial
-    const d = new Date(Date.UTC(1899, 11, 30) + parseFloat(s) * 86400000)
-    return toDateStr(d)
-  }
-  const d = new Date(s)                                  // ISO or any parseable
-  return isNaN(d) ? s : toDateStr(d)
-}
-
 function presetRange(days) {
   const end   = new Date()
   const start = new Date()
   start.setDate(start.getDate() - (days - 1))
-  return { from: toDateStr(start), to: toDateStr(end) }
+  return { from: toLocalDateStr(start), to: toLocalDateStr(end) }
 }
 
 // ── CSV helpers ───────────────────────────────────────────────────────────────
@@ -190,7 +170,7 @@ export default function DownloadModal({ isOpen, onClose }) {
             <input
               type="date"
               value={to}
-              max={toDateStr(new Date())}
+              max={toLocalDateStr(new Date())}
               onChange={e => setTo(e.target.value)}
               className={inputCls}
             />

@@ -24,13 +24,14 @@ export function useFilteredEntries() {
   } = useApp()
 
   const { user, isAdmin } = useAuth()
+  const userEmail = user?.email
 
   const processed = useMemo(() => {
     let result = [...entries]
 
     // ── Role filter: staff sees only their own entries ──────────────────────
     if (!isAdmin) {
-      result = result.filter((e) => e.createdBy === user?.email)
+      result = result.filter((e) => e.createdBy === userEmail)
     }
 
     // ── Search filter ───────────────────────────────────────────────────────
@@ -86,7 +87,7 @@ export function useFilteredEntries() {
     const paginated  = result.slice(start, start + pageSize)
 
     return { data: paginated, totalCount, totalPages }
-  }, [entries, searchQuery, filterFrom, filterTo, filterCommodity, filterBuyer, filterSeller, filterStatus, currentPage, pageSize, sortColumn, sortDirection, isAdmin, user])
+  }, [entries, searchQuery, filterFrom, filterTo, filterCommodity, filterBuyer, filterSeller, filterStatus, currentPage, pageSize, sortColumn, sortDirection, isAdmin, userEmail])
 
   return processed
 }

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useApp } from '../../context/AppContext'
 import { formatDate, formatCurrency, formatQtl, formatBrokerage, formatVehicleNumbers, formatDateTime } from '../../utils/helpers'
@@ -12,7 +13,7 @@ import EmptyState from '../common/EmptyState'
  *   onDelete  {(entry) => void}
  *   onApprove {(entry) => void}
  */
-export default function DataCard({ entries, onEdit, onDelete, onApprove }) {
+function DataCard({ entries, onEdit, onDelete, onApprove }) {
   const { isAdmin, user }              = useAuth()
   const { currentPage, pageSize }      = useApp()
   const startIndex                     = (currentPage - 1) * pageSize
@@ -154,3 +155,5 @@ export default function DataCard({ entries, onEdit, onDelete, onApprove }) {
     </div>
   )
 }
+
+export default memo(DataCard)

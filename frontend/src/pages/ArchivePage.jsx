@@ -1,19 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Navigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { useAuth } from '../context/AuthContext'
 import Layout from '../components/layout/Layout'
 import { fetchDeletedEntries, restoreEntry } from '../services/api'
 import { formatDate, formatDateTime, formatCurrency, formatWeight, formatBrokerage, formatVehicleNumbers } from '../utils/helpers'
 
 export default function ArchivePage() {
-  const { isAdmin, user } = useAuth()
-
   const [entries,    setEntries]    = useState([])
   const [loading,    setLoading]    = useState(true)
   const [restoringId, setRestoringId] = useState(null)
-
-  if (!isAdmin) return <Navigate to="/" replace />
 
   const load = useCallback(async () => {
     setLoading(true)

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
 import { validateEntryForm, isFormValid } from '../../utils/validators'
 import { computeAmount, formatBrokerage, formatCurrency } from '../../utils/helpers'
@@ -134,6 +134,10 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
     vehicleNumbers: prev.vehicleNumbers.filter((_, i) => i !== idx),
   }))
 
+  // ── Memoized dropdown options ──────────────────────────────────────────────
+  const buyerOptions = useMemo(() => buyers.map(b => ({ id: b.id, label: partyLabel(b) })), [buyers])
+  const sellerOptions = useMemo(() => sellers.map(s => ({ id: s.id, label: partyLabel(s) })), [sellers])
+
   // ── Derived ────────────────────────────────────────────────────────────────
   const estimatedAmount = computeAmount(form.rate, form.weight)
 
@@ -175,7 +179,6 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
       brokerageValue: form.brokerageValue !== '' ? parseFloat(form.brokerageValue) : '',
       comment:        form.comment.trim(),
     }
-    console.log('Submitting form with payload:', payload) // Debug: check payload before submission
 
     const success = await onSubmit(payload)
     setSubmitting(false)
@@ -286,7 +289,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
           className={inputCls(fieldError('buyer'))}
         >
           <option value="">Select buyer…</option>
-          {buyers.map(b => { const l = partyLabel(b); return <option key={b.id} value={l}>{l}</option> })}
+          {buyerOptions.map(({ id, label }) => <option key={id} value={label}>{label}</option>)}
           <option value="Other">Other…</option>
         </select>
         {form.buyer === 'Other' && (
@@ -308,7 +311,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
           className={inputCls(fieldError('seller'))}
         >
           <option value="">Select seller…</option>
-          {sellers.map(s => { const l = partyLabel(s); return <option key={s.id} value={l}>{l}</option> })}
+          {sellerOptions.map(({ id, label }) => <option key={id} value={label}>{label}</option>)}
           <option value="Other">Other…</option>
         </select>
         {form.seller === 'Other' && (

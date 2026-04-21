@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { toLocalDateStr } from '../../utils/dateFormate'
 
@@ -48,7 +48,14 @@ export default function SearchFilter({ totalCount = 0 }) {
     setPageSize,
   } = useApp()
 
-  const [showFilters, setShowFilters] = useState(false)
+  const [showFilters,  setShowFilters]  = useState(false)
+  const [searchInput,  setSearchInput]  = useState(searchQuery)
+
+  // Debounce: only call setSearch after 300 ms of inactivity
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput), 300)
+    return () => clearTimeout(timer)
+  }, [searchInput, setSearch])
 
   // Local pending state — only committed on Apply
   const [pendingCommodity, setPendingCommodity] = useState(filterCommodity)
@@ -153,13 +160,13 @@ export default function SearchFilter({ totalCount = 0 }) {
             <input
               type="text"
               placeholder="Search vehicle / bill / buyer / commodity…"
-              value={searchQuery}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-800 placeholder-gray-400 shadow-sm transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
             />
-            {searchQuery && (
+            {searchInput && (
               <button
-                onClick={() => setSearch('')}
+                onClick={() => { setSearchInput(''); setSearch('') }}
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                 aria-label="Clear search"
               >
@@ -323,7 +330,7 @@ export default function SearchFilter({ totalCount = 0 }) {
       )}
 
       {/* Notices */}
-      {searchQuery && (
+      {searchInput && (
         <p className="text-xs text-amber-600">
           Date filter paused while searching — showing results across all dates.
         </p>

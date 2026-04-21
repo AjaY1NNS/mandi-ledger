@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Navigate } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import Modal from '../components/common/Modal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
@@ -18,7 +17,7 @@ const TABS = [
 ]
 
 export default function ManagePage() {
-  const { isAdmin, user } = useAuth()
+  const { user } = useAuth()
   const { buyers, sellers, commodities, masterLoading, openAddModal } = useApp()
   const { loadMasterData, buyer, seller, commodity } = useManage()
   const { confirmState, requestConfirm, handleConfirm, handleCancel } = useConfirm()
@@ -26,9 +25,6 @@ export default function ManagePage() {
   const [activeTab,  setActiveTab]  = useState('buyers')
   const [modal,      setModal]      = useState({ open: false, type: null, data: null })
   // type: 'addBuyer'|'editBuyer'|'addSeller'|'editSeller'|'addCommodity'|'editCommodity'
-
-  // Admins only
-  if (!isAdmin) return <Navigate to="/" replace />
 
   useEffect(() => { loadMasterData() }, [loadMasterData])
 

@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext'
 import { TABLE_COLUMNS } from '../../utils/constants'
@@ -13,18 +14,17 @@ import EmptyState from '../common/EmptyState'
  *   onDelete       {(entry) => void}
  *   onApprove      {(entry) => void}
  */
-export default function DataTable({ entries, onEdit, onDelete, onApprove }) {
+function DataTable({ entries, onEdit, onDelete, onApprove }) {
   const { sortColumn, sortDirection, setSort, currentPage, pageSize } = useApp()
   const { isAdmin, user }                                             = useAuth()
 
   const startIndex = (currentPage - 1) * pageSize
 
-  const handleSort = (col) => {
+  const handleSort = useCallback((col) => {
     if (!col.sortable) return
-    const newDir =
-      sortColumn === col.key && sortDirection === 'asc' ? 'desc' : 'asc'
+    const newDir = sortColumn === col.key && sortDirection === 'asc' ? 'desc' : 'asc'
     setSort(col.key, newDir)
-  }
+  }, [sortColumn, sortDirection, setSort])
 
   const SortIcon = ({ colKey }) => {
     if (sortColumn !== colKey)
@@ -39,7 +39,7 @@ export default function DataTable({ entries, onEdit, onDelete, onApprove }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm" role="region" aria-label="Entries table">
       <table className="min-w-full divide-y divide-gray-100 text-sm">
         <thead className="bg-gray-50">
           <tr>
@@ -164,3 +164,5 @@ export default function DataTable({ entries, onEdit, onDelete, onApprove }) {
     </div>
   )
 }
+
+export default memo(DataTable)
