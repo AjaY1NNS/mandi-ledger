@@ -9,7 +9,7 @@ export const TABLE_COLUMNS = [
   { key: 'seller',         label: 'Seller',       sortable: true,  numeric: false },
   { key: 'commodity',      label: 'Commodity',    sortable: true,  numeric: false },
   { key: 'rate',           label: 'Rate (₹)',     sortable: true,  numeric: true  },
-  { key: 'weight',         label: 'Qty (Qtl)',    sortable: true,  numeric: true  },
+  { key: 'weight',         label: 'Weight (QNTL)',    sortable: true,  numeric: true  },
   { key: 'brokerageValue', label: 'Brokerage',    sortable: true,  numeric: true  },
   { key: 'comment',        label: 'Comment',      sortable: false, numeric: false },
 ];

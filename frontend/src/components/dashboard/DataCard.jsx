@@ -90,7 +90,7 @@ function DataCard({ entries, onEdit, onDelete, onApprove }) {
                 <p className="text-sm font-bold text-emerald-600">{formatCurrency(entry.rate)}</p>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Qty (Qtl)</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Weight (QNTL)</p>
                 <p className="text-sm font-semibold text-gray-800">{formatQtl(entry.weight)}</p>
               </div>
               <div>

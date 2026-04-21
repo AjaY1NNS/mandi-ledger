@@ -19,7 +19,7 @@ import { useManage } from '../hooks/useManage'
 
 export default function DashboardPage() {
   const { isLoading, error, showAddModal, showEditModal, editingEntry, openAddModal, closeAddModal, openEditModal, closeEditModal } = useApp()
-  const { roleLoading } = useAuth()
+  const { roleLoading, isAdmin } = useAuth()
   const { loadEntries, addEntry, updateEntry, deleteEntry, approveEntry } = useEntries()
   const { data: entries, totalCount, totalPages } = useFilteredEntries()
   const { confirmState, requestConfirm, handleConfirm, handleCancel } = useConfirm()
@@ -76,16 +76,17 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
           {/* Download CSV button */}
-          <button
-            onClick={() => setShowDownload(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:bg-gray-50 hover:text-primary-700"
-            title="Download CSV"
-          >
+          {isAdmin && (
+            <button
+              onClick={() => setShowDownload(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:bg-gray-50 hover:text-primary-700"
+              title="Download CSV"
+            >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
             <span className="hidden sm:inline">Export</span>
-          </button>
+          </button>)}
 
           {/* View toggle (desktop only) */}
           <div className="hidden md:flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-sm">

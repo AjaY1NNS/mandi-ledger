@@ -70,7 +70,7 @@ function DataTable({ entries, onEdit, onDelete, onApprove }) {
         <tbody className="divide-y divide-gray-50">
           {entries.map((entry, idx) => {
             const isApproved = String(entry.isApproved) === 'true'
-            const canEdit    = !isApproved && (isAdmin || entry.createdBy === user?.email)
+            const canEdit    = !isApproved
             const canDelete  = !isApproved && isAdmin
             const canApprove = !isApproved
 

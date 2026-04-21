@@ -31,7 +31,8 @@ export function useFilteredEntries() {
 
     // ── Role filter: staff sees only their own entries ──────────────────────
     if (!isAdmin) {
-      result = result.filter((e) => e.createdBy === userEmail)
+      result = result.filter((e) => e.isApproved === false)  // Staff can see approved entries + their own unapproved entries
+      result = result.filter((e) => e.isDeleted === false) 
     }
 
     // ── Search filter ───────────────────────────────────────────────────────

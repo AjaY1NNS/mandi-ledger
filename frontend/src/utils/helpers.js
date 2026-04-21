@@ -60,7 +60,7 @@ export const formatCurrency = (value) => {
 export const formatWeight = (value) => {
   const num = parseFloat(value)
   if (isNaN(num)) return '—'
-  return `${new Intl.NumberFormat('en-IN').format(num)} QNTL`
+  return `${new Intl.NumberFormat('en-IN').format(num)}`
 }
 
 /**
@@ -133,7 +133,7 @@ export const formatBrokerage = (type, value) => {
 export const formatQtl = (value) => {
   const num = parseFloat(value)
   if (isNaN(num)) return '—'
-  return `${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }).format(num)} Qtl`
+  return `${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }).format(num)}`
 }
 
 /**
