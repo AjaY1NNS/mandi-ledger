@@ -13,6 +13,10 @@ export function useFilteredEntries() {
     searchQuery,
     filterFrom,
     filterTo,
+    filterCommodity,
+    filterBuyer,
+    filterSeller,
+    filterStatus,
     currentPage,
     pageSize,
     sortColumn,
@@ -50,6 +54,12 @@ export function useFilteredEntries() {
       if (filterTo)   result = result.filter((e) => toYMD(e.date) <= filterTo)
     }
 
+    // ── Entity + status filters ─────────────────────────────────────────────
+    if (filterCommodity) result = result.filter((e) => e.commodity === filterCommodity)
+    if (filterBuyer)     result = result.filter((e) => e.buyer     === filterBuyer)
+    if (filterSeller)    result = result.filter((e) => e.seller    === filterSeller)
+    if (filterStatus)    result = result.filter((e) => String(e.isApproved) === filterStatus)
+
     // ── Sorting ─────────────────────────────────────────────────────────────
     result.sort((a, b) => {
       let valA = a[sortColumn] ?? ''
@@ -76,7 +86,7 @@ export function useFilteredEntries() {
     const paginated  = result.slice(start, start + pageSize)
 
     return { data: paginated, totalCount, totalPages }
-  }, [entries, searchQuery, filterFrom, filterTo, currentPage, pageSize, sortColumn, sortDirection, isAdmin, user])
+  }, [entries, searchQuery, filterFrom, filterTo, filterCommodity, filterBuyer, filterSeller, filterStatus, currentPage, pageSize, sortColumn, sortDirection, isAdmin, user])
 
   return processed
 }
