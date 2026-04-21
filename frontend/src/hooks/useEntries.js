@@ -3,10 +3,11 @@ import toast from 'react-hot-toast'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import {
-  fetchEntries as apiFetchEntries,
-  addEntry     as apiAddEntry,
-  updateEntry  as apiUpdateEntry,
-  deleteEntry  as apiDeleteEntry,
+  fetchEntries  as apiFetchEntries,
+  addEntry      as apiAddEntry,
+  updateEntry   as apiUpdateEntry,
+  deleteEntry   as apiDeleteEntry,
+  approveEntry  as apiApproveEntry,
 } from '../services/api'
 import { generateId, nowIso } from '../utils/helpers'
 
@@ -20,6 +21,7 @@ export function useEntries() {
     addEntry:    ctxAdd,
     updateEntry: ctxUpdate,
     deleteEntry: ctxDelete,
+    approveEntry: ctxApprove,
     setLoading,
     setError,
     closeAddModal,
@@ -109,5 +111,23 @@ export function useEntries() {
     [isAdmin, ctxDelete]
   )
 
-  return { loadEntries, addEntry, updateEntry, deleteEntry }
+  // ── Approve entry ───────────────────────────────────────────────────────────
+  const approveEntry = useCallback(
+    async (entry) => {
+      if (String(entry.isApproved) === 'true') return false
+      const toastId = toast.loading('Approving entry…')
+      try {
+        const result = await apiApproveEntry(entry.id)
+        ctxApprove(result?.data ?? { id: entry.id, isApproved: 'true' })
+        toast.success('Entry approved and locked.', { id: toastId })
+        return true
+      } catch (err) {
+        toast.error(`Failed to approve: ${err.message}`, { id: toastId })
+        return false
+      }
+    },
+    [ctxApprove]
+  )
+
+  return { loadEntries, addEntry, updateEntry, deleteEntry, approveEntry }
 }

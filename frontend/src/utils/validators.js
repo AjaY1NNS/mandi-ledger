@@ -17,11 +17,11 @@ export const positiveNumber = (value, fieldName = 'Value') => {
   return null
 }
 
-export const nonNegativeInteger = (value, fieldName = 'Value') => {
-  if (value === '' || value === null || value === undefined)
-    return `${fieldName} is required.`
-  const num = parseInt(value, 10)
-  if (isNaN(num) || num < 0) return `${fieldName} must be a non-negative integer.`
+export const optionalPositiveNumber = (value, fieldName = 'Value') => {
+  if (value === '' || value === null || value === undefined) return null  // optional
+  const num = parseFloat(value)
+  if (isNaN(num)) return `${fieldName} must be a number.`
+  if (num < 0)    return `${fieldName} cannot be negative.`
   return null
 }
 
@@ -40,37 +40,43 @@ export const validDate = (value) => {
 export const validateEntryForm = (data) => {
   const errors = {}
 
-  const dateErr         = validDate(data.date)
-  const vehicleNumErr   = required(data.vehicleNumber, 'Vehicle Number')
-  const billNumErr      = required(data.billNumber,    'Bill Number')
-  const buyerErr        = required(data.buyer,         'Buyer')
-  const sellerErr       = required(data.seller,        'Seller')
-  const commodityErr    = required(data.commodity,     'Commodity')
-  const rateErr         = positiveNumber(data.rate,    'Rate')
-  const weightErr       = positiveNumber(data.weight,  'Weight')
-  const vehicleCountErr = nonNegativeInteger(data.vehicleCount, 'Vehicle Count')
+  // ── Required fields ─────────────────────────────────────────────────────
+  const dateErr      = validDate(data.date)
+  const commodityErr = required(data.commodity, 'Commodity')
+  const rateErr      = optionalPositiveNumber(data.rate, 'Rate (₹ / QNTL)')
 
-  if (dateErr)         errors.date          = dateErr
-  if (vehicleNumErr)   errors.vehicleNumber = vehicleNumErr
-  if (billNumErr)      errors.billNumber    = billNumErr
-  if (rateErr)         errors.rate          = rateErr
-  if (weightErr)       errors.weight        = weightErr
-  if (vehicleCountErr) errors.vehicleCount  = vehicleCountErr
-  if (commodityErr)    errors.commodity     = commodityErr
+  if (dateErr)      errors.date      = dateErr
+  if (rateErr)      errors.rate      = rateErr
+  if (commodityErr) errors.commodity = commodityErr
 
-  // Buyer: if 'Other' selected, require custom input
-  if (buyerErr) {
-    errors.buyer = buyerErr
-  } else if (data.buyer === 'Other' && !data.buyerOther?.trim()) {
-    errors.buyerOther = 'Please specify the buyer name.'
+  // ── Weight (QNTL) – optional but must be positive if provided ───────────
+  const weightErr = optionalPositiveNumber(data.weight, 'Weight (Qtl)')
+  if (weightErr) errors.weight = weightErr
+
+  // ── Vehicle count – required positive integer ────────────────────────────
+  const vehicleCountVal = parseInt(data.vehicleCount, 10)
+  if (!data.vehicleCount && data.vehicleCount !== 0) {
+    errors.vehicleCount = 'Vehicle count is required.'
+  } else if (isNaN(vehicleCountVal) || vehicleCountVal <= 0) {
+    errors.vehicleCount = 'Vehicle count must be at least 1.'
   }
 
-  // Seller: same as buyer
-  if (sellerErr) {
-    errors.seller = sellerErr
-  } else if (data.seller === 'Other' && !data.sellerOther?.trim()) {
-    errors.sellerOther = 'Please specify the seller name.'
-  }
+  // ── Vehicle numbers – optional; just skip empty rows ─────────────────────
+  // (no error if all rows are blank)
+
+  // ── Brokerage – optional, but must be positive if provided ──────────────
+  const brokerageErr = optionalPositiveNumber(data.brokerageValue, 'Brokerage')
+  if (brokerageErr) errors.brokerageValue = brokerageErr
+
+  // ── Buyer "Other" input – only validate if buyer is selected as Other ────
+  // if (data.buyer === 'Other' && !data.buyerOther?.trim()) {
+  //   errors.buyerOther = 'Please specify the buyer name.'
+  // }
+
+  // ── Seller "Other" input – only validate if seller is selected as Other ──
+  // if (data.seller === 'Other' && !data.sellerOther?.trim()) {
+  //   errors.sellerOther = 'Please specify the seller name.'
+  // }
 
   return errors
 }

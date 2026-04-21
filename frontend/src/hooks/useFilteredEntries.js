@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
+import { toYMD } from '../utils/dateFormate'
 
 /**
  * Returns a filtered, sorted, and paginated slice of entries
@@ -10,7 +11,12 @@ export function useFilteredEntries() {
   const {
     entries,
     searchQuery,
-    filterDate,
+    filterFrom,
+    filterTo,
+    filterCommodity,
+    filterBuyer,
+    filterSeller,
+    filterStatus,
     currentPage,
     pageSize,
     sortColumn,
@@ -28,21 +34,31 @@ export function useFilteredEntries() {
     }
 
     // ── Search filter ───────────────────────────────────────────────────────
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase()
-      result = result.filter(
-        (e) =>
-          e.vehicleNumber?.toLowerCase().includes(q) ||
-          e.billNumber?.toLowerCase().includes(q) ||
-          e.buyer?.toLowerCase().includes(q) ||
-          e.seller?.toLowerCase().includes(q)
-      )
+    const q = searchQuery.trim().toLowerCase()
+    if (q) {
+      result = result.filter((e) => {
+        const str = (v) => String(v ?? '').toLowerCase()
+        return (
+          str(e.vehicleNumber).includes(q) ||
+          str(e.billNumber).includes(q)    ||
+          str(e.buyer).includes(q)         ||
+          str(e.seller).includes(q)        ||
+          str(e.commodity).includes(q)
+        )
+      })
     }
 
-    // ── Date filter ─────────────────────────────────────────────────────────
-    if (filterDate) {
-      result = result.filter((e) => e.date === filterDate)
+    // ── Date range filter – skipped when a search query is active ──────────
+    if (!q) {
+      if (filterFrom) result = result.filter((e) => toYMD(e.date) >= filterFrom)
+      if (filterTo)   result = result.filter((e) => toYMD(e.date) <= filterTo)
     }
+
+    // ── Entity + status filters ─────────────────────────────────────────────
+    if (filterCommodity) result = result.filter((e) => e.commodity === filterCommodity)
+    if (filterBuyer)     result = result.filter((e) => e.buyer     === filterBuyer)
+    if (filterSeller)    result = result.filter((e) => e.seller    === filterSeller)
+    if (filterStatus)    result = result.filter((e) => String(e.isApproved) === filterStatus)
 
     // ── Sorting ─────────────────────────────────────────────────────────────
     result.sort((a, b) => {
@@ -50,7 +66,7 @@ export function useFilteredEntries() {
       let valB = b[sortColumn] ?? ''
 
       // Numeric columns
-      if (['rate', 'weight', 'vehicleCount'].includes(sortColumn)) {
+      if (['rate', 'weight', 'vehicleCount', 'brokerageValue'].includes(sortColumn)) {
         valA = parseFloat(valA) || 0
         valB = parseFloat(valB) || 0
       } else {
@@ -70,7 +86,7 @@ export function useFilteredEntries() {
     const paginated  = result.slice(start, start + pageSize)
 
     return { data: paginated, totalCount, totalPages }
-  }, [entries, searchQuery, filterDate, currentPage, pageSize, sortColumn, sortDirection, isAdmin, user])
+  }, [entries, searchQuery, filterFrom, filterTo, filterCommodity, filterBuyer, filterSeller, filterStatus, currentPage, pageSize, sortColumn, sortDirection, isAdmin, user])
 
   return processed
 }
