@@ -83,10 +83,10 @@ export default function ManagePage() {
     <div>
       <div className="flex flex-wrap items-baseline gap-2">
         <span className="font-semibold text-gray-900">
-          {item.firstName} {item.lastName}
+          {item.firmName}
         </span>
-        {item.firmName && (
-          <span className="text-sm text-gray-500">· {item.firmName}</span>
+        {item.firstName && (
+          <span className="text-sm text-gray-500">· {item.firstName} {item.lastName}</span>
         )}
       </div>
       <p className="mt-0.5 text-sm text-gray-500 line-clamp-1">{item.address}</p>

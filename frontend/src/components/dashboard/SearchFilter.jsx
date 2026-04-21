@@ -10,11 +10,21 @@ function presetRange(days) {
 
 function thisWeekRange() {
   const today = new Date()
-  const day   = today.getDay()
-  const diff  = day === 0 ? -6 : 1 - day
-  const from  = new Date(today)
-  from.setDate(today.getDate() + diff)
-  return { from: toLocalDateStr(from), to: toLocalDateStr(today) }
+  const day   = today.getDay()                  // 0=Sun, 1=Mon ... 6=Sat
+
+  // Days to go back to reach Sunday
+  const diffToSunday   = day              // Sun(0)→0, Mon(1)→1 ... Sat(6)→6
+
+  // Days to go forward to reach Saturday
+  const diffToSaturday = 6 - day          // Sun(0)→6, Mon(1)→5 ... Sat(6)→0
+
+  const from = new Date(today)
+  const to   = new Date(today)
+
+  from.setDate(today.getDate() - diffToSunday)
+  to.setDate(today.getDate() + diffToSaturday)
+
+  return { from: toLocalDateStr(from), to: toLocalDateStr(today) } // 👈 was missing `to`
 }
 
 const PRESETS = [

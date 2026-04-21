@@ -17,7 +17,7 @@ const EMPTY_FORM = {
   rate:            '',
   weight:          '',       // QNTL – optional
   commodity:       '',
-  brokerageType:   'percent', // 'percent' | 'amount'
+  brokerageType:   'amount', // 'percent' | 'amount'
   brokerageValue:  '',
   comment:         '',
 }
@@ -74,7 +74,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
         date:            normalizedDate,
         vehicleCount:    initialData.vehicleCount ?? '',
         vehicleNumbers:  vehicles,
-        brokerageType:   initialData.brokerageType  || 'percent',
+        brokerageType:   initialData.brokerageType  || 'amount',
         brokerageValue:  initialData.brokerageValue ?? '',
         weight:          initialData.weight ?? '',
         buyer:           buyerNames.includes(initialData.buyer)   ? initialData.buyer  : 'Other',
@@ -357,13 +357,14 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
         <div className="flex gap-2">
           {/* Type toggle */}
           <div className="flex shrink-0 rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
-            <BrokerageTypeBtn
+            {/* <BrokerageTypeBtn
               active={form.brokerageType === 'percent'}
               onClick={() => setForm(prev => ({ ...prev, brokerageType: 'percent' }))}
               label="%" title="Percentage"
-            />
+            /> */}
             <BrokerageTypeBtn
-              active={form.brokerageType === 'amount'}
+              // active={form.brokerageType === 'amount'}
+              active={true}
               onClick={() => setForm(prev => ({ ...prev, brokerageType: 'amount' }))}
               label="₹" title="Flat Amount"
             />

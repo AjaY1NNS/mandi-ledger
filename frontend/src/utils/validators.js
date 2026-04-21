@@ -69,14 +69,14 @@ export const validateEntryForm = (data) => {
   if (brokerageErr) errors.brokerageValue = brokerageErr
 
   // ── Buyer "Other" input – only validate if buyer is selected as Other ────
-  if (data.buyer === 'Other' && !data.buyerOther?.trim()) {
-    errors.buyerOther = 'Please specify the buyer name.'
-  }
+  // if (data.buyer === 'Other' && !data.buyerOther?.trim()) {
+  //   errors.buyerOther = 'Please specify the buyer name.'
+  // }
 
   // ── Seller "Other" input – only validate if seller is selected as Other ──
-  if (data.seller === 'Other' && !data.sellerOther?.trim()) {
-    errors.sellerOther = 'Please specify the seller name.'
-  }
+  // if (data.seller === 'Other' && !data.sellerOther?.trim()) {
+  //   errors.sellerOther = 'Please specify the seller name.'
+  // }
 
   return errors
 }
