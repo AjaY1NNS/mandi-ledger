@@ -6,6 +6,9 @@ import {
   onAuthStateChanged,
   setPersistence,
   browserLocalPersistence,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from 'firebase/auth'
 
 const firebaseConfig = {
@@ -52,6 +55,18 @@ export const getIdToken = async () => {
  * @returns {() => void} unsubscribe function
  */
 export const onAuthChange = (callback) => onAuthStateChanged(auth, callback)
+
+/**
+ * Re-authenticate then update the current user's password.
+ * Firebase requires re-auth before sensitive operations.
+ */
+export const changePassword = async (currentPassword, newPassword) => {
+  const user = auth.currentUser
+  if (!user) throw new Error('No authenticated user.')
+  const credential = EmailAuthProvider.credential(user.email, currentPassword)
+  await reauthenticateWithCredential(user, credential)
+  await updatePassword(user, newPassword)
+}
 
 export { auth }
 export default app

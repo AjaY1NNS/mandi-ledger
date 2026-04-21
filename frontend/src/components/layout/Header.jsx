@@ -1,12 +1,27 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { roleBadgeClass } from '../../utils/helpers'
+import ProfileModal from '../common/ProfileModal'
 import toast from 'react-hot-toast'
 
 export default function Header({ onAddEntry }) {
   const { user, role, isAdmin, logout } = useAuth()
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuOpen,    setMenuOpen]    = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const menuRef = useRef(null)
+
+  // Close dropdown when clicking anywhere outside the menu
+  useEffect(() => {
+    if (!menuOpen) return
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [menuOpen])
   const location = useLocation()
   const isManagePage  = location.pathname === '/manage'
   const isArchivePage = location.pathname === '/archive'
@@ -21,6 +36,7 @@ export default function Header({ onAddEntry }) {
   }
 
   return (
+    <>
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand */}
@@ -97,7 +113,7 @@ export default function Header({ onAddEntry }) {
           </button>
 
           {/* User menu */}
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen((v) => !v)}
               className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-300"
@@ -119,10 +135,7 @@ export default function Header({ onAddEntry }) {
 
             {/* Dropdown */}
             {menuOpen && (
-              <>
-                {/* Backdrop */}
-                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 z-20 mt-2 w-56 origin-top-right rounded-xl border border-gray-100 bg-white shadow-lg animate-fade-in">
+              <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl border border-gray-100 bg-white shadow-lg animate-fade-in">
                   {/* User info */}
                   <div className="border-b border-gray-100 px-4 py-3">
                     <p className="truncate text-sm font-medium text-gray-800">{user?.email}</p>
@@ -132,6 +145,16 @@ export default function Header({ onAddEntry }) {
                   </div>
                   {/* Actions */}
                   <div className="p-1">
+                    <button
+                      onClick={() => { setMenuOpen(false); setShowProfile(true) }}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50"
+                    >
+                      <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                      </svg>
+                      Profile &amp; Password
+                    </button>
+                    <div className="my-1 border-t border-gray-100" />
                     <button
                       onClick={() => { setMenuOpen(false); handleLogout() }}
                       className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
@@ -143,11 +166,13 @@ export default function Header({ onAddEntry }) {
                     </button>
                   </div>
                 </div>
-              </>
             )}
           </div>
         </div>
       </div>
     </header>
+
+    <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
+  </>
   )
 }
