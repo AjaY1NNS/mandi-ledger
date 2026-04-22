@@ -14,11 +14,12 @@ export default function StatsBar() {
   const todayStr = toLocalDateStr(new Date())
 
   const stats = useMemo(() => {
-    const totalEntries  = entries.length
-    const totalWeight   = entries.reduce((sum, e) => sum + (Number(e.weight)           || 0), 0)
-    const totalVehicles = entries.reduce((sum, e) => sum + (Number(e.vehicleCount, 10)   || 0), 0)
+    const _entries = entries.filter(e => !e.isDeleted) // Exclude deleted entries from stats
+    const totalEntries  = _entries.length
+    const totalWeight   = _entries.reduce((sum, e) => sum + (Number(e.weight)           || 0), 0)
+    const totalVehicles = _entries.reduce((sum, e) => sum + (Number(e.vehicleCount, 10)   || 0), 0)
 
-    const todayEntries  = entries.filter(e => toYMD(e.date) === todayStr)
+    const todayEntries  = _entries.filter(e => toYMD(e.date) === todayStr)
     const todayCount    = todayEntries.length
     const todayWeight   = todayEntries.reduce((sum, e) => sum + (Number(e.weight) || 0), 0)
     const todayVehicles = todayEntries.reduce((sum, e) => sum + (Number(e.vehicleCount, 10) || 0), 0)

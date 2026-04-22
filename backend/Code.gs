@@ -133,15 +133,6 @@ function handleUpdate(e, callerEmail) {
   const existing = findObjectById(ENTRIES_SHEET, body.id)
   if (!existing) return jsonError('Entry not found', 404)
 
-  // Approved entries are locked – nobody can edit them
-  if (String(existing.isApproved) === 'true')
-    return jsonError('This entry has been approved and cannot be edited.', 403)
-
-  if (getUserRole(callerEmail) !== 'admin') {
-    if (String(existing.createdBy).toLowerCase() !== callerEmail.toLowerCase())
-      return jsonError('Forbidden: you can only edit your own entries', 403)
-  }
-
   const sheet = getSheet(ENTRIES_SHEET)
   const { rowIndex } = findRowById(sheet, body.id)
   if (rowIndex === -1) return jsonError('Entry not found', 404)

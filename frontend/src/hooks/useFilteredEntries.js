@@ -85,7 +85,8 @@ export function useFilteredEntries() {
 
       if (valA < valB) return sortDirection === 'asc' ? -1 : 1
       if (valA > valB) return sortDirection === 'asc' ? 1 : -1
-      return 0
+      // Tie-break by creation time so newest entry always appears first
+      return new Date(b.createdAt ?? 0) - new Date(a.createdAt ?? 0)
     })
 
     const totalCount = result.length

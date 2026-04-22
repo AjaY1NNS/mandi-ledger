@@ -113,6 +113,8 @@ export default function DownloadModal({ isOpen, onClose }) {
     setTo(t)
   }
 
+  const _entries = entries.filter(e => !e.isDeleted) // Exclude deleted entries from download
+
   const filtered = useMemo(() => {
   return entries.filter(e => {
     if (e.isDeleted)                                     return false
@@ -244,7 +246,7 @@ export default function DownloadModal({ isOpen, onClose }) {
             </p>
             {!hasFilters && (
               <p className="text-xs text-gray-400 mt-0.5">
-                No filters applied — all {entries.length} entries will be included
+                No filters applied — all {_entries.length} entries will be included
               </p>
             )}
           </div>
