@@ -52,7 +52,7 @@ function entryToRow(e) {
     toYMD(e.date),
     e.billNumber      ?? '',
     e.vehicleCount    ?? '',
-    formatVehicleNumbers(e.vehicleNumber),
+    e.vehicleNumber   ?? '',
     e.buyer           ?? '',
     e.seller          ?? '',
     e.commodity       ?? '',
