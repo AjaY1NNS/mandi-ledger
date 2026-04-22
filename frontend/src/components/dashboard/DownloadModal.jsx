@@ -109,7 +109,6 @@ export default function DownloadModal({ isOpen, onClose }) {
 
   const handlePreset = (preset) => {
     const { from: f, to: t } = presetRange(preset.days)
-    console.log(`Applying preset "${preset.label}"`, f, t)
     setFrom(f)
     setTo(t)
   }

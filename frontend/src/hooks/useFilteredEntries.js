@@ -34,7 +34,7 @@ export function useFilteredEntries() {
 
     // ── Role filter: staff sees unapproved + approved within last 7 days ────
     if (!isAdmin) {
-      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+      const sevenDaysAgo = Date.now() - 1 * 24 * 60 * 60 * 1000
       result = result.filter((e) => {
         if (String(e.isApproved) !== 'true') return true
         if (!e.approvedAt) return true
