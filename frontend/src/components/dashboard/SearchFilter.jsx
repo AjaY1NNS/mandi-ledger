@@ -30,7 +30,7 @@ const PRESETS = [
   { label: 'Last Year',  getRange: () => presetRange(365) },
 ]
 
-export default function SearchFilter({ totalCount = 0 }) {
+export default function SearchFilter({ totalCount = 0, onRefresh }) {
   const {
     entries,
     commodities,
@@ -199,6 +199,21 @@ export default function SearchFilter({ totalCount = 0 }) {
               </span>
             )}
           </button>
+
+          {/* Refresh button */}
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              title="Refresh results"
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+          )}
         </div>
 
         {/* Count + page size */}

@@ -280,7 +280,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
       </div>
 
       {/* ── Buyer ───────────────────────────────────────────────── */}
-      <Field label="Buyer" error={fieldError('buyer') || fieldError('buyerOther')}>
+      <Field label="Buyer" required error={fieldError('buyer') || fieldError('buyerOther')}>
         <select
           name="buyer"
           value={form.buyer}
@@ -302,7 +302,7 @@ export default function EntryForm({ initialData = null, onSubmit, onCancel, isEd
       </Field>
 
       {/* ── Seller ──────────────────────────────────────────────── */}
-      <Field label="Seller" error={fieldError('seller') || fieldError('sellerOther')}>
+      <Field label="Seller" required error={fieldError('seller') || fieldError('sellerOther')}>
         <select
           name="seller"
           value={form.seller}

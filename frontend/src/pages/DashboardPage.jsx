@@ -69,7 +69,7 @@ export default function DashboardPage() {
         {/* Page heading */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Shree Dwarikadhish Brokers Dashboard</h2>
+            <h2 className="text-xl font-bold text-gray-900">Shri Dwarkadhish Brokers Dashboard</h2>
             <p className="mt-0.5 text-sm text-gray-500">
               Manage and track all mandi transactions
             </p>
@@ -124,7 +124,7 @@ export default function DashboardPage() {
         )}
 
         {/* Search + Filter bar */}
-        <SearchFilter totalCount={totalCount} />
+        <SearchFilter totalCount={totalCount} onRefresh={loadEntries} />
 
         {/* Data */}
         {isLoading ? (

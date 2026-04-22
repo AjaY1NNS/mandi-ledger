@@ -68,15 +68,19 @@ export const validateEntryForm = (data) => {
   const brokerageErr = optionalPositiveNumber(data.brokerageValue, 'Brokerage')
   if (brokerageErr) errors.brokerageValue = brokerageErr
 
-  // ── Buyer "Other" input – only validate if buyer is selected as Other ────
-  // if (data.buyer === 'Other' && !data.buyerOther?.trim()) {
-  //   errors.buyerOther = 'Please specify the buyer name.'
-  // }
+  // ── Buyer – required ─────────────────────────────────────────────────────
+  if (!data.buyer) {
+    errors.buyer = 'Buyer is required.'
+  } else if (data.buyer === 'Other' && !data.buyerOther?.trim()) {
+    errors.buyerOther = 'Please specify the buyer name.'
+  }
 
-  // ── Seller "Other" input – only validate if seller is selected as Other ──
-  // if (data.seller === 'Other' && !data.sellerOther?.trim()) {
-  //   errors.sellerOther = 'Please specify the seller name.'
-  // }
+  // ── Seller – required ─────────────────────────────────────────────────────
+  if (!data.seller) {
+    errors.seller = 'Seller is required.'
+  } else if (data.seller === 'Other' && !data.sellerOther?.trim()) {
+    errors.sellerOther = 'Please specify the seller name.'
+  }
 
   return errors
 }
