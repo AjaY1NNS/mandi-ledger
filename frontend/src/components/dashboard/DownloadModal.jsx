@@ -24,8 +24,8 @@ function presetRange(days) {
 // ── CSV helpers ───────────────────────────────────────────────────────────────
 const CSV_HEADERS = [
   'Date', 'Bill Number', 'Vehicle Count', 'Vehicle Numbers',
-  'Buyer', 'Seller', 'Commodity', 'Rate (₹)', 'Weight (QNTL)',
-  'Brokerage Type', 'Brokerage Value', 'Comment',
+  'Buyer', 'Seller', 'Commodity', 'Rate (Rs/QNLT)', 'Weight (QNTL)',
+  'Brokerage (Rs/QNLT)', 'Comment',
   'Status', 'Approved By', 'Approved At (IST)',
   'Created By', 'Created At (IST)',
 ]
@@ -58,7 +58,6 @@ function entryToRow(e) {
     e.commodity       ?? '',
     e.rate            ?? '',
     e.weight          ?? '',
-    e.brokerageType   ?? '',
     e.brokerageValue  ?? '',
     e.comment         ?? '',
     String(e.isApproved) === 'true' ? 'Approved' : 'Pending',

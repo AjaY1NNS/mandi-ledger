@@ -86,7 +86,7 @@ function DataCard({ entries, onEdit, onDelete, onApprove }) {
             {/* Rate / Weight / Brokerage */}
             <div className="mt-3 flex items-center gap-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Rate</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Rate (Rs/QNLT)</p>
                 <p className="text-sm font-bold text-emerald-600">{formatCurrency(entry.rate)}</p>
               </div>
               <div>
@@ -94,7 +94,7 @@ function DataCard({ entries, onEdit, onDelete, onApprove }) {
                 <p className="text-sm font-semibold text-gray-800">{formatQtl(entry.weight)}</p>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Brokerage</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Brokerage (Rs/QNLT)</p>
                 <p className="text-sm font-semibold text-indigo-700">
                   {formatBrokerage(entry.brokerageType, entry.brokerageValue)}
                 </p>
