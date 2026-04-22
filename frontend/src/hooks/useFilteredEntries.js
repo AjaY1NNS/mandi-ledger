@@ -29,10 +29,17 @@ export function useFilteredEntries() {
   const processed = useMemo(() => {
     let result = [...entries]
 
-    // ── Role filter: staff sees only their own entries ──────────────────────
+    // ── Always exclude deleted entries from the main dashboard ──────────────
+    result = result.filter((e) => !e.isDeleted)
+
+    // ── Role filter: staff sees unapproved + approved within last 7 days ────
     if (!isAdmin) {
-      result = result.filter((e) => e.isApproved === false)  // Staff can see approved entries + their own unapproved entries
-      result = result.filter((e) => e.isDeleted === false) 
+      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+      result = result.filter((e) => {
+        if (String(e.isApproved) !== 'true') return true
+        if (!e.approvedAt) return true
+        return new Date(e.approvedAt).getTime() >= sevenDaysAgo
+      })
     }
 
     // ── Search filter ───────────────────────────────────────────────────────

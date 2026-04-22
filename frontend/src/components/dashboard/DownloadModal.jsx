@@ -24,15 +24,32 @@ function presetRange(days) {
 // ── CSV helpers ───────────────────────────────────────────────────────────────
 const CSV_HEADERS = [
   'Date', 'Bill Number', 'Vehicle Count', 'Vehicle Numbers',
-  'Buyer', 'Seller', 'Commodity', 'Rate (₹)', 'Weight (Qtl)',
+  'Buyer', 'Seller', 'Commodity', 'Rate (₹)', 'Weight (QNTL)',
   'Brokerage Type', 'Brokerage Value', 'Comment',
-  'Status', 'Approved By', 'Approved At',
-  'Created By', 'Created At',
+  'Status', 'Approved By', 'Approved At (IST)',
+  'Created By', 'Created At (IST)',
 ]
+
+function toIST(isoStr) {
+  if (!isoStr) return ''
+  try {
+    return new Date(isoStr).toLocaleString('en-IN', {
+      timeZone:  'Asia/Kolkata',
+      day:       '2-digit',
+      month:     'short',
+      year:      'numeric',
+      hour:      '2-digit',
+      minute:    '2-digit',
+      hour12:    true,
+    })
+  } catch {
+    return isoStr
+  }
+}
 
 function entryToRow(e) {
   return [
-    e.date            ?? '',
+    toYMD(e.date),
     e.billNumber      ?? '',
     e.vehicleCount    ?? '',
     formatVehicleNumbers(e.vehicleNumber),
@@ -46,9 +63,9 @@ function entryToRow(e) {
     e.comment         ?? '',
     String(e.isApproved) === 'true' ? 'Approved' : 'Pending',
     e.approvedBy      ?? '',
-    e.approvedAt      ?? '',
+    toIST(e.approvedAt),
     e.createdBy       ?? '',
-    e.createdAt       ?? '',
+    toIST(e.createdAt),
   ]
 }
 
@@ -99,7 +116,8 @@ export default function DownloadModal({ isOpen, onClose }) {
 
   const filtered = useMemo(() => {
   return entries.filter(e => {
-    const dateYMD = toYMD(e.date)                              // 👈 key fix
+    if (e.isDeleted)                                     return false
+    const dateYMD = toYMD(e.date)
     if (from      && dateYMD < from)                    return false
     if (to        && dateYMD > to)                      return false
     if (commodity && e.commodity !== commodity)         return false

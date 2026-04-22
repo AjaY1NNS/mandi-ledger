@@ -29,9 +29,9 @@ export function useManage() {
         fetchSellers(),
         fetchCommodities(),
       ])
-      setBuyers(buyersRes?.data ?? [])
-      setSellers(sellersRes?.data ?? [])
-      setCommodities(commoditiesRes?.data ?? [])
+      setBuyers((buyersRes?.data ?? []).filter(b => !b.isDeleted))
+      setSellers((sellersRes?.data ?? []).filter(s => !s.isDeleted))
+      setCommodities((commoditiesRes?.data ?? []).filter(c => !c.isDeleted))
     } catch (err) {
       toast.error(`Failed to load master data: ${err.message}`)
     } finally {
